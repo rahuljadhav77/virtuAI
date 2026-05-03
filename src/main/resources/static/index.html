@@ -190,6 +190,15 @@
 
                 <!-- Req / Res Fields -->
                 <div id="field-reqres" class="creation-field" style="display:none;">
+                    <label style="font-size:0.75rem; color:var(--text-muted);">HTTP Method</label>
+                    <select id="reqres-method"
+                        style="width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.75rem; border-radius:0.5rem; margin-bottom:1rem;">
+                        <option value="POST">POST</option>
+                        <option value="GET">GET</option>
+                        <option value="PUT">PUT</option>
+                        <option value="DELETE">DELETE</option>
+                    </select>
+
                     <label style="font-size:0.75rem; color:var(--text-muted);">Sample Request Body (Optional JSON
                         Matcher)</label>
                     <input type="file" id="req-file" onchange="handleReqFileUpload(event)"
@@ -444,11 +453,12 @@
                 } else if (method === 'reqres') {
                     const reqContent = document.getElementById('req-content').value;
                     const resContent = document.getElementById('res-content').value;
+                    const reqresMethod = document.getElementById('reqres-method').value || 'POST';
                     if (!resContent) return alert("Response Body is required.");
 
                     const rule = {
                         name: "Auto-generated rule",
-                        method: "POST",
+                        method: reqresMethod,
                         pathPattern: ".*",
                         statusCode: 200,
                         responseBody: resContent,
