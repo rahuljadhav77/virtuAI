@@ -21,7 +21,7 @@ public class VirtualRuleEntity {
     
     private int statusCode;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "rule_headers", joinColumns = @JoinColumn(name = "rule_id"))
     @MapKeyColumn(name = "header_key")
     @Column(name = "header_value")
