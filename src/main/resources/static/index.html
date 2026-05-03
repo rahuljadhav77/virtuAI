@@ -57,6 +57,15 @@
             <div class="main-content">
                 <div class="card" style="grid-column: 1 / 2;">
                     <div class="card-header">
+                        <h2 class="card-title">Virtual Services</h2>
+                    </div>
+                    <div id="service-list">
+                        <!-- Services will be injected here -->
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
                         <h2 class="card-title">Live Traffic Logs</h2>
                         <button class="secondary" onclick="toggleRecording()" id="btn-recording">Start
                             Recording</button>
@@ -75,26 +84,33 @@
                         </tbody>
                     </table>
                 </div>
-
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title">Virtual Services</h2>
-                    </div>
-                    <div id="service-list">
-                        <!-- Services will be injected here -->
-                    </div>
-                </div>
             </div>
         </div> <!-- End pane-live -->
 
         <!-- Test Client Pane -->
         <div id="pane-test" style="display:none;">
-            <div class="card">
+            <div class="card" style="margin-bottom:1.5rem;">
                 <div class="card-header">
                     <h2 class="card-title">Test Client</h2>
-                    <span style="font-size:0.75rem; color:var(--text-muted);">Send requests to your virtualized
-                        endpoints</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">Select a service, pick an endpoint, and send test requests</span>
                 </div>
+
+                <!-- Service Selector Row -->
+                <div style="display:flex; gap:1rem; margin-bottom:1rem; align-items:center;">
+                    <label style="font-size:0.75rem; color:var(--text-muted); white-space:nowrap;">Service:</label>
+                    <select id="test-service-select" onchange="onServiceSelect()"
+                        style="flex:1; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem; font-size:0.875rem;">
+                        <option value="">-- Select a Service to Test --</option>
+                    </select>
+                </div>
+
+                <!-- Endpoints for Selected Service -->
+                <div id="test-endpoints-panel" style="display:none; margin-bottom:1rem; padding:0.75rem; background:rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:0.5rem;">
+                    <label style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Available Endpoints (click to auto-fill)</label>
+                    <div id="test-endpoints-list" style="margin-top:0.5rem; display:flex; flex-wrap:wrap; gap:0.5rem;"></div>
+                </div>
+
+                <!-- Method + Path + Send -->
                 <div style="display:flex; gap:1rem; margin-bottom:1rem;">
                     <select id="test-method"
                         style="background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem;">
@@ -107,17 +123,19 @@
                         style="flex:1; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem;">
                     <button onclick="runTest()">Send</button>
                 </div>
+
+                <!-- Request / Response -->
                 <div style="display:flex; gap:1rem;">
                     <div style="flex:1;">
                         <label style="font-size:0.75rem; color:var(--text-muted);">Request Body</label>
                         <textarea id="test-req-body" placeholder="{}"
-                            style="width:100%; height:120px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem; font-family:monospace;"></textarea>
+                            style="width:100%; height:150px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem; font-family:'Fira Code',monospace; font-size:0.8rem;"></textarea>
                     </div>
                     <div style="flex:1;">
                         <label style="font-size:0.75rem; color:var(--text-muted);">Response <span id="test-status"
                                 style="margin-left:1rem; font-weight:bold;"></span></label>
                         <textarea id="test-res-body" readonly placeholder="Response will appear here..."
-                            style="width:100%; height:120px; background:rgba(0,0,0,0.2); border:1px solid var(--glass-border); color:var(--success); padding:0.5rem; border-radius:0.25rem; font-family:monospace;"></textarea>
+                            style="width:100%; height:150px; background:rgba(0,0,0,0.2); border:1px solid var(--glass-border); color:var(--success); padding:0.5rem; border-radius:0.25rem; font-family:'Fira Code',monospace; font-size:0.8rem;"></textarea>
                     </div>
                 </div>
             </div>
@@ -228,11 +246,16 @@
             return resp.json();
         }
 
+        // Global store for rules (used by test client)
+        let _allRules = [];
+
         async function refreshData() {
             try {
                 const services = await fetchData('/api/admin/services');
                 const rules = await fetchData('/api/admin/rules/http');
                 const logs = await fetchData('/api/recorder/logs');
+
+                _allRules = rules;
 
                 document.getElementById('stat-services').innerText = services.length;
                 document.getElementById('stat-rules').innerText = rules.length;
@@ -240,6 +263,19 @@
 
                 renderTraffic(logs);
                 renderServices(services);
+
+                // Update Test Client dropdown
+                const select = document.getElementById('test-service-select');
+                const currentVal = select.value;
+                select.innerHTML = '<option value="">-- Select a Service to Test --</option>';
+                services.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.id;
+                    opt.textContent = `${s.name} (${s.type})`;
+                    select.appendChild(opt);
+                });
+                if (currentVal) select.value = currentVal;
+
             } catch (e) {
                 console.error("Failed to fetch dashboard data", e);
             }
@@ -432,15 +468,18 @@
             let path = document.getElementById('test-path').value;
             const body = document.getElementById('test-req-body').value;
 
-            if (!path) path = "/";
-            if (!path.startsWith("/")) path = "/" + path;
+            if (!path) {
+                alert('Please enter a path or select an endpoint from the list above.');
+                return;
+            }
+            if (!path.startsWith('/')) path = '/' + path;
 
             const resBodyEl = document.getElementById('test-res-body');
             const statusEl = document.getElementById('test-status');
 
-            resBodyEl.value = "Sending...";
-            statusEl.innerText = "";
-            statusEl.style.color = "var(--text-muted)";
+            resBodyEl.value = 'Sending...';
+            statusEl.innerText = '';
+            statusEl.style.color = 'var(--text-muted)';
 
             try {
                 const options = {
@@ -450,7 +489,7 @@
 
                 if (method !== 'GET' && method !== 'HEAD' && body) {
                     options.body = body;
-                    options.headers['Content-Type'] = 'application/json'; // Default assumption
+                    options.headers['Content-Type'] = 'application/json';
                 }
 
                 const startTime = Date.now();
@@ -460,23 +499,70 @@
                 const responseText = await resp.text();
 
                 statusEl.innerText = `${resp.status} ${resp.statusText} (${timeTaken}ms)`;
-                statusEl.style.color = resp.ok ? "var(--success)" : "var(--error)";
+                statusEl.style.color = resp.ok ? 'var(--success)' : 'var(--error)';
 
                 try {
-                    // Try to pretty print JSON
                     const json = JSON.parse(responseText);
                     resBodyEl.value = JSON.stringify(json, null, 2);
                 } catch (e) {
                     resBodyEl.value = responseText;
                 }
 
-                // Refresh dashboard immediately to show log
                 refreshData();
             } catch (e) {
-                statusEl.innerText = "Error";
-                statusEl.style.color = "var(--error)";
+                statusEl.innerText = 'Error';
+                statusEl.style.color = 'var(--error)';
                 resBodyEl.value = e.message;
             }
+        }
+
+        // --- Test Client: Service selector logic ---
+        function onServiceSelect() {
+            const serviceId = document.getElementById('test-service-select').value;
+            const panel = document.getElementById('test-endpoints-panel');
+            const list = document.getElementById('test-endpoints-list');
+
+            if (!serviceId) {
+                panel.style.display = 'none';
+                list.innerHTML = '';
+                return;
+            }
+
+            // Filter rules that belong to this service
+            const serviceRules = _allRules.filter(r => String(r.serviceId) === String(serviceId));
+
+            if (serviceRules.length === 0) {
+                panel.style.display = 'block';
+                list.innerHTML = '<span style="font-size:0.8rem; color:var(--text-muted); font-style:italic;">No rules/endpoints configured for this service yet.</span>';
+                return;
+            }
+
+            panel.style.display = 'block';
+            list.innerHTML = serviceRules.map(rule => {
+                const methodColor = {
+                    'GET': '#61affe', 'POST': '#49cc90', 'PUT': '#fca130', 'DELETE': '#f93e3e'
+                }[rule.method] || 'var(--text-muted)';
+                // Convert regex path pattern to a readable path
+                let displayPath = rule.pathPattern || '/';
+                displayPath = displayPath.replace(/^\^/, '').replace(/\$$/, '').replace(/\[\^\/\]\+/g, '{id}').replace(/\.\*/g, '*');
+                return `<button onclick="fillEndpoint('${rule.method}', '${displayPath.replace(/'/g, "\\'")}')"
+                    style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.35rem 0.75rem;
+                           background:rgba(255,255,255,0.05); border:1px solid ${methodColor}40;
+                           border-radius:0.25rem; cursor:pointer; transition:all 0.2s;"
+                    onmouseover="this.style.background='${methodColor}20'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+                    <span style="font-size:0.65rem; font-weight:700; color:${methodColor}; font-family:'Fira Code',monospace;">${rule.method}</span>
+                    <span style="font-size:0.8rem; color:white; font-family:'Fira Code',monospace;">${displayPath}</span>
+                </button>`;
+            }).join('');
+        }
+
+        function fillEndpoint(method, path) {
+            document.getElementById('test-method').value = method;
+            document.getElementById('test-path').value = path;
+            // Subtle highlight animation on the path input
+            const pathInput = document.getElementById('test-path');
+            pathInput.style.borderColor = 'var(--primary)';
+            setTimeout(() => { pathInput.style.borderColor = 'var(--glass-border)'; }, 800);
         }
 
         setInterval(refreshData, 3000);
