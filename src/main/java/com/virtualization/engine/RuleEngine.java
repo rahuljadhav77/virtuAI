@@ -84,15 +84,18 @@ public class RuleEngine {
         }
 
         // 3. Schema Validation
-        if (rule.getRequestSchema() != null && request.getBody() != null) {
-            if (!schemaService.validate(request.getBody(), rule.getRequestSchema())) {
+        if (rule.getRequestSchema() != null) {
+            if (request.getBody() == null || !schemaService.validate(request.getBody(), rule.getRequestSchema())) {
                 log.debug("Rule {} schema validation failed", rule.getName());
                 return false;
             }
         }
 
         // 4. JSONPath Body Match
-        if (rule.getJsonPathCondition() != null && request.getBody() != null) {
+        if (rule.getJsonPathCondition() != null) {
+            if (request.getBody() == null) {
+                return false;
+            }
             try {
                 Object value = JsonPath.read(request.getBody(), rule.getJsonPathCondition());
                 if (rule.getJsonPathValue() != null && !rule.getJsonPathValue().equals(value.toString())) {
