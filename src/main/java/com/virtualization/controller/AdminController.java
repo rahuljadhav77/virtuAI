@@ -41,7 +41,21 @@ public class AdminController {
         serviceRepository.deleteById(id);
     }
 
-    // --- HTTP Rule Management ---
+    @PutMapping("/services/{id}/stop")
+    public VirtualServiceEntity stopService(@PathVariable Long id) {
+        VirtualServiceEntity service = serviceRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Service not found"));
+        service.setEnabled(false);
+        return serviceRepository.save(service);
+    }
+
+    @PutMapping("/services/{id}/start")
+    public VirtualServiceEntity startService(@PathVariable Long id) {
+        VirtualServiceEntity service = serviceRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Service not found"));
+        service.setEnabled(true);
+        return serviceRepository.save(service);
+    }
     @PostMapping("/rules/http")
     public VirtualRuleEntity createHttpRule(@RequestBody VirtualRuleEntity rule) {
         return httpRuleRepository.save(rule);

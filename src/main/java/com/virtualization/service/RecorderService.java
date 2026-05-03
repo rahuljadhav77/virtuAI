@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class RecorderService {
     private final TrafficLogRepository repository;
-    private boolean recordingEnabled = false;
+    private boolean recordingEnabled = true;
 
     public RecorderService(TrafficLogRepository repository) {
         this.repository = repository;

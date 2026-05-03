@@ -291,6 +291,25 @@
             refreshData();
         }
 
+        async function toggleServiceStatus(serviceId, shouldEnable) {
+            const endpoint = shouldEnable ? `/api/admin/services/${serviceId}/start` : `/api/admin/services/${serviceId}/stop`;
+            const method = 'PUT';
+            
+            try {
+                const resp = await fetch(endpoint, {
+                    method: method,
+                    headers: { 'X-API-KEY': API_KEY }
+                });
+                if (resp.ok) {
+                    refreshData();
+                } else {
+                    alert("Failed to update service status");
+                }
+            } catch (e) {
+                alert("Error: " + e.message);
+            }
+        }
+
         async function refreshData() {
             try {
                 const services = await fetchData('/api/admin/services');
@@ -349,10 +368,12 @@
                         <div style="font-weight: 600; display:flex; align-items:center; gap:0.5rem;">
                             ${s.name}
                             <span style="font-size:0.65rem; padding:1px 4px; background:rgba(255,255,255,0.1); border-radius:4px;">${formatServiceType(s.type)}</span>
+                            <span style="font-size:0.65rem; padding:2px 6px; border-radius:4px; font-weight:600; ${s.enabled ? 'background:rgba(16,185,129,0.2); color:var(--success)' : 'background:rgba(239,68,68,0.2); color:var(--error)'}">${s.enabled ? '● Running' : '● Stopped'}</span>
                         </div>
                         <div style="font-size: 0.75rem; color: var(--text-muted)">${s.enabled ? 'Active' : 'Disabled'}</div>
                     </div>
                     <div style="display:flex; gap:0.5rem; align-items:center;">
+                        <button class="secondary" style="padding:4px 8px; font-size:0.75rem; border-color:${s.enabled ? 'var(--error)' : 'var(--success)'}; color:${s.enabled ? 'var(--error)' : 'var(--success)'}; cursor:pointer;" onclick="event.stopPropagation(); ${s.enabled ? `toggleServiceStatus(${s.id}, false)` : `toggleServiceStatus(${s.id}, true)`}">${s.enabled ? 'Stop' : 'Start'}</button>
                         <button class="secondary" style="padding:4px 8px; font-size:0.75rem; border-color:var(--error); color:var(--error);" onclick="event.stopPropagation(); deleteService(${s.id})">Delete</button>
                         <div class="status-indicator ${s.enabled ? 'status-online' : ''}" style="margin: 0"></div>
                     </div>
