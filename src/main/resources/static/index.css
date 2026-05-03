@@ -188,3 +188,16 @@ button.secondary:hover {
     font-family: 'Fira Code', monospace;
     color: #818cf8;
 }
+
+.tab-btn {
+    padding: 0.5rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+    filter: brightness(1.1);
+}

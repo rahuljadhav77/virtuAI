@@ -17,12 +17,18 @@
                 <h1>ANTIGRAVITY ENGINE</h1>
             </div>
             <div class="header-actions">
-                <button class="secondary" onclick="refreshData()">Refresh Dashboard</button>
+                <button class="secondary" onclick="refreshData()">Refresh Data</button>
                 <button onclick="openCreateModal()">+ Create Service</button>
             </div>
         </header>
 
-        <div class="stats-grid">
+        <div class="tabs" style="display:flex; gap:1rem; margin-bottom:2rem; border-bottom:1px solid var(--glass-border); padding-bottom:1rem;">
+            <button id="tab-live" class="tab-btn active" style="background:var(--primary); color:white;" onclick="switchTab('live')">Live Services & Logs</button>
+            <button id="tab-test" class="tab-btn" style="background:transparent; color:var(--text-muted); border:1px solid var(--glass-border);" onclick="switchTab('test')">Test Client</button>
+        </div>
+
+        <div id="pane-live">
+            <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-label">Active Virtual Services</div>
                 <div class="stat-value" id="stat-services">0</div>
@@ -42,35 +48,7 @@
         </div>
 
         <div class="main-content">
-            <!-- Built-in Test Client -->
-            <div class="card" style="grid-column: 1 / -1;">
-                <div class="card-header">
-                    <h2 class="card-title">Test Client</h2>
-                    <span style="font-size:0.75rem; color:var(--text-muted);">Send requests to your virtualized endpoints</span>
-                </div>
-                <div style="display:flex; gap:1rem; margin-bottom:1rem;">
-                    <select id="test-method" style="background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem;">
-                        <option value="GET">GET</option>
-                        <option value="POST">POST</option>
-                        <option value="PUT">PUT</option>
-                        <option value="DELETE">DELETE</option>
-                    </select>
-                    <input type="text" id="test-path" placeholder="/your-mock-endpoint" style="flex:1; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem;">
-                    <button onclick="runTest()">Send</button>
-                </div>
-                <div style="display:flex; gap:1rem;">
-                    <div style="flex:1;">
-                        <label style="font-size:0.75rem; color:var(--text-muted);">Request Body</label>
-                        <textarea id="test-req-body" placeholder="{}" style="width:100%; height:120px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem; font-family:monospace;"></textarea>
-                    </div>
-                    <div style="flex:1;">
-                        <label style="font-size:0.75rem; color:var(--text-muted);">Response <span id="test-status" style="margin-left:1rem; font-weight:bold;"></span></label>
-                        <textarea id="test-res-body" readonly placeholder="Response will appear here..." style="width:100%; height:120px; background:rgba(0,0,0,0.2); border:1px solid var(--glass-border); color:var(--success); padding:0.5rem; border-radius:0.25rem; font-family:monospace;"></textarea>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
+            <div class="card" style="grid-column: 1 / 2;">
                 <div class="card-header">
                     <h2 class="card-title">Live Traffic Logs</h2>
                     <button class="secondary" onclick="toggleRecording()" id="btn-recording">Start Recording</button>
@@ -99,6 +77,37 @@
                 </div>
             </div>
         </div>
+        </div> <!-- End pane-live -->
+
+        <!-- Test Client Pane -->
+        <div id="pane-test" style="display:none;">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Test Client</h2>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">Send requests to your virtualized endpoints</span>
+                </div>
+                <div style="display:flex; gap:1rem; margin-bottom:1rem;">
+                    <select id="test-method" style="background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem;">
+                        <option value="GET">GET</option>
+                        <option value="POST">POST</option>
+                        <option value="PUT">PUT</option>
+                        <option value="DELETE">DELETE</option>
+                    </select>
+                    <input type="text" id="test-path" placeholder="/your-mock-endpoint" style="flex:1; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem;">
+                    <button onclick="runTest()">Send</button>
+                </div>
+                <div style="display:flex; gap:1rem;">
+                    <div style="flex:1;">
+                        <label style="font-size:0.75rem; color:var(--text-muted);">Request Body</label>
+                        <textarea id="test-req-body" placeholder="{}" style="width:100%; height:120px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem; font-family:monospace;"></textarea>
+                    </div>
+                    <div style="flex:1;">
+                        <label style="font-size:0.75rem; color:var(--text-muted);">Response <span id="test-status" style="margin-left:1rem; font-weight:bold;"></span></label>
+                        <textarea id="test-res-body" readonly placeholder="Response will appear here..." style="width:100%; height:120px; background:rgba(0,0,0,0.2); border:1px solid var(--glass-border); color:var(--success); padding:0.5rem; border-radius:0.25rem; font-family:monospace;"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div> <!-- End pane-test -->
     </div>
 
     <!-- Unified Create Service Modal -->
@@ -156,6 +165,32 @@
 
     <script>
         const API_KEY = 'enterprise-secret';
+
+        function switchTab(tabId) {
+            document.getElementById('pane-live').style.display = tabId === 'live' ? 'block' : 'none';
+            document.getElementById('pane-test').style.display = tabId === 'test' ? 'block' : 'none';
+            
+            const btnLive = document.getElementById('tab-live');
+            const btnTest = document.getElementById('tab-test');
+
+            if (tabId === 'live') {
+                btnLive.style.background = 'var(--primary)';
+                btnLive.style.color = 'white';
+                btnLive.style.border = 'none';
+
+                btnTest.style.background = 'transparent';
+                btnTest.style.color = 'var(--text-muted)';
+                btnTest.style.border = '1px solid var(--glass-border)';
+            } else {
+                btnTest.style.background = 'var(--primary)';
+                btnTest.style.color = 'white';
+                btnTest.style.border = 'none';
+
+                btnLive.style.background = 'transparent';
+                btnLive.style.color = 'var(--text-muted)';
+                btnLive.style.border = '1px solid var(--glass-border)';
+            }
+        }
 
         async function fetchData(url) {
             const resp = await fetch(url, {
