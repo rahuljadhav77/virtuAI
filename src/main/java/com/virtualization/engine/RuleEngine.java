@@ -131,6 +131,7 @@ public class RuleEngine {
                 .body(body)
                 .headers(rule.getResponseHeaders())
                 .delayMs(rule.getDelayMs())
+                .serviceId(rule.getServiceId())
                 .build();
     }
 }

@@ -32,6 +32,7 @@ public class RecorderService {
         log.setRequestBody(request.getBody());
         log.setResponseBody(response.getBody());
         log.setStatusCode(response.getStatusCode());
+        log.setServiceId(response.getServiceId());
         repository.save(log);
     }
 }

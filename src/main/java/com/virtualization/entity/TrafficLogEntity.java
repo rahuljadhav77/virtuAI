@@ -14,6 +14,7 @@ public class TrafficLogEntity {
 
     private String method;
     private String path;
+    private Long serviceId;
     
     @Column(columnDefinition = "TEXT")
     private String requestBody;

@@ -66,10 +66,15 @@
 
                 <div class="card">
                     <div class="card-header">
+                    <div>
                         <h2 class="card-title">Live Traffic Logs</h2>
-                        <button class="secondary" onclick="toggleRecording()" id="btn-recording">Start
-                            Recording</button>
+                        <div id="traffic-filter-label" style="font-size:0.85rem; color:var(--text-muted); margin-top:0.25rem;">Showing all traffic</div>
                     </div>
+                    <div style="display:flex; gap:0.75rem; align-items:center;">
+                        <button class="secondary" onclick="clearServiceSelection()" id="btn-clear-filter" style="display:none;">Clear Filter</button>
+                        <button class="secondary" onclick="toggleRecording()" id="btn-recording">Start Recording</button>
+                    </div>
+                </div>
                     <table>
                         <thead>
                             <tr>
@@ -248,18 +253,50 @@
 
         // Global store for rules (used by test client)
         let _allRules = [];
+        let _selectedServiceId = null;
+        let _selectedServiceName = null;
+
+        function formatServiceType(type) {
+            if (!type) return 'Unknown';
+            const value = type.toUpperCase();
+            if (value === 'REST' || value === 'HTTP') return 'REST Webservice';
+            if (value === 'MQ' || value === 'ASYNC') return 'MQ Service';
+            if (value === 'SOAP') return 'SOAP Webservice';
+            return type;
+        }
+
+        function selectService(id, name) {
+            if (_selectedServiceId === id) {
+                _selectedServiceId = null;
+                _selectedServiceName = null;
+            } else {
+                _selectedServiceId = id;
+                _selectedServiceName = name;
+            }
+            refreshData();
+        }
+
+        function clearServiceSelection() {
+            _selectedServiceId = null;
+            _selectedServiceName = null;
+            refreshData();
+        }
 
         async function refreshData() {
             try {
                 const services = await fetchData('/api/admin/services');
                 const rules = await fetchData('/api/admin/rules/http');
-                const logs = await fetchData('/api/recorder/logs');
+                const allLogs = await fetchData('/api/recorder/logs');
+                const logs = _selectedServiceId ? await fetchData(`/api/recorder/logs?serviceId=${_selectedServiceId}`) : allLogs;
 
                 _allRules = rules;
 
                 document.getElementById('stat-services').innerText = services.length;
                 document.getElementById('stat-rules').innerText = rules.length;
-                document.getElementById('stat-traffic').innerText = logs.length;
+                document.getElementById('stat-traffic').innerText = allLogs.length;
+
+                document.getElementById('traffic-filter-label').innerText = _selectedServiceId ? `Showing transactions for ${_selectedServiceName}` : 'Showing all traffic';
+                document.getElementById('btn-clear-filter').style.display = _selectedServiceId ? 'inline-flex' : 'none';
 
                 renderTraffic(logs);
                 renderServices(services);
@@ -271,7 +308,7 @@
                 services.forEach(s => {
                     const opt = document.createElement('option');
                     opt.value = s.id;
-                    opt.textContent = `${s.name} (${s.type})`;
+                    opt.textContent = `${s.name} (${formatServiceType(s.type)})`;
                     select.appendChild(opt);
                 });
                 if (currentVal) select.value = currentVal;
@@ -295,21 +332,24 @@
 
         function renderServices(services) {
             const container = document.getElementById('service-list');
-            container.innerHTML = services.map(s => `
-                <div class="service-card">
+            container.innerHTML = services.map(s => {
+                const activeClass = _selectedServiceId === s.id ? ' active-service' : '';
+                return `
+                <div class="service-card${activeClass}" onclick="selectService(${s.id}, '${s.name.replace(/'/g, "\\'")}')" title="Click to view ${s.name} traffic">
                     <div>
                         <div style="font-weight: 600; display:flex; align-items:center; gap:0.5rem;">
                             ${s.name}
-                            <span style="font-size:0.65rem; padding:1px 4px; background:rgba(255,255,255,0.1); border-radius:4px;">${s.type}</span>
+                            <span style="font-size:0.65rem; padding:1px 4px; background:rgba(255,255,255,0.1); border-radius:4px;">${formatServiceType(s.type)}</span>
                         </div>
                         <div style="font-size: 0.75rem; color: var(--text-muted)">${s.enabled ? 'Active' : 'Disabled'}</div>
                     </div>
                     <div style="display:flex; gap:0.5rem; align-items:center;">
-                        <button class="secondary" style="padding:4px 8px; font-size:0.75rem; border-color:var(--error); color:var(--error);" onclick="deleteService(${s.id})">Delete</button>
+                        <button class="secondary" style="padding:4px 8px; font-size:0.75rem; border-color:var(--error); color:var(--error);" onclick="event.stopPropagation(); deleteService(${s.id})">Delete</button>
                         <div class="status-indicator ${s.enabled ? 'status-online' : ''}" style="margin: 0"></div>
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         async function deleteService(id) {

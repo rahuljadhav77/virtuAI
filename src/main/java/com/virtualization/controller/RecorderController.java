@@ -43,7 +43,10 @@ public class RecorderController {
     }
 
     @GetMapping("/logs")
-    public List<TrafficLogEntity> getLogs() {
+    public List<TrafficLogEntity> getLogs(@RequestParam(required = false) Long serviceId) {
+        if (serviceId != null) {
+            return logRepository.findByServiceIdOrderByTimestampDesc(serviceId);
+        }
         return logRepository.findAll();
     }
 
