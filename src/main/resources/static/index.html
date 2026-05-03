@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,14 +8,16 @@
     <link rel="stylesheet" href="index.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code&display=swap"
+        rel="stylesheet">
 </head>
+
 <body>
     <div class="dashboard-container">
         <header>
             <div class="logo-group">
                 <div class="status-indicator status-online"></div>
-                <h1>ANTIGRAVITY ENGINE</h1>
+                <h1>Virtu-AI ENGINE</h1>
             </div>
             <div class="header-actions">
                 <button class="secondary" onclick="refreshData()">Refresh Data</button>
@@ -22,61 +25,66 @@
             </div>
         </header>
 
-        <div class="tabs" style="display:flex; gap:1rem; margin-bottom:2rem; border-bottom:1px solid var(--glass-border); padding-bottom:1rem;">
-            <button id="tab-live" class="tab-btn active" style="background:var(--primary); color:white;" onclick="switchTab('live')">Live Services & Logs</button>
-            <button id="tab-test" class="tab-btn" style="background:transparent; color:var(--text-muted); border:1px solid var(--glass-border);" onclick="switchTab('test')">Test Client</button>
+        <div class="tabs"
+            style="display:flex; gap:1rem; margin-bottom:2rem; border-bottom:1px solid var(--glass-border); padding-bottom:1rem;">
+            <button id="tab-live" class="tab-btn active" style="background:var(--primary); color:white;"
+                onclick="switchTab('live')">Live Services & Logs</button>
+            <button id="tab-test" class="tab-btn"
+                style="background:transparent; color:var(--text-muted); border:1px solid var(--glass-border);"
+                onclick="switchTab('test')">Test Client</button>
         </div>
 
         <div id="pane-live">
             <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">Active Virtual Services</div>
-                <div class="stat-value" id="stat-services">0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Active Mock Rules</div>
-                <div class="stat-value" id="stat-rules">0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Total Traffic Recorded</div>
-                <div class="stat-value" id="stat-traffic">0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">System Uptime</div>
-                <div class="stat-value">99.9%</div>
-            </div>
-        </div>
-
-        <div class="main-content">
-            <div class="card" style="grid-column: 1 / 2;">
-                <div class="card-header">
-                    <h2 class="card-title">Live Traffic Logs</h2>
-                    <button class="secondary" onclick="toggleRecording()" id="btn-recording">Start Recording</button>
+                <div class="stat-card">
+                    <div class="stat-label">Active Virtual Services</div>
+                    <div class="stat-value" id="stat-services">0</div>
                 </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Time</th>
-                            <th>Method</th>
-                            <th>Path</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="traffic-table-body">
-                        <!-- Logs will be injected here -->
-                    </tbody>
-                </table>
+                <div class="stat-card">
+                    <div class="stat-label">Active Mock Rules</div>
+                    <div class="stat-value" id="stat-rules">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Traffic Recorded</div>
+                    <div class="stat-value" id="stat-traffic">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">System Uptime</div>
+                    <div class="stat-value">99.9%</div>
+                </div>
             </div>
 
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title">Virtual Services</h2>
+            <div class="main-content">
+                <div class="card" style="grid-column: 1 / 2;">
+                    <div class="card-header">
+                        <h2 class="card-title">Live Traffic Logs</h2>
+                        <button class="secondary" onclick="toggleRecording()" id="btn-recording">Start
+                            Recording</button>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Method</th>
+                                <th>Path</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="traffic-table-body">
+                            <!-- Logs will be injected here -->
+                        </tbody>
+                    </table>
                 </div>
-                <div id="service-list">
-                    <!-- Services will be injected here -->
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Virtual Services</h2>
+                    </div>
+                    <div id="service-list">
+                        <!-- Services will be injected here -->
+                    </div>
                 </div>
             </div>
-        </div>
         </div> <!-- End pane-live -->
 
         <!-- Test Client Pane -->
@@ -84,26 +92,32 @@
             <div class="card">
                 <div class="card-header">
                     <h2 class="card-title">Test Client</h2>
-                    <span style="font-size:0.75rem; color:var(--text-muted);">Send requests to your virtualized endpoints</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">Send requests to your virtualized
+                        endpoints</span>
                 </div>
                 <div style="display:flex; gap:1rem; margin-bottom:1rem;">
-                    <select id="test-method" style="background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem;">
+                    <select id="test-method"
+                        style="background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem;">
                         <option value="GET">GET</option>
                         <option value="POST">POST</option>
                         <option value="PUT">PUT</option>
                         <option value="DELETE">DELETE</option>
                     </select>
-                    <input type="text" id="test-path" placeholder="/your-mock-endpoint" style="flex:1; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem;">
+                    <input type="text" id="test-path" placeholder="/your-mock-endpoint"
+                        style="flex:1; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem;">
                     <button onclick="runTest()">Send</button>
                 </div>
                 <div style="display:flex; gap:1rem;">
                     <div style="flex:1;">
                         <label style="font-size:0.75rem; color:var(--text-muted);">Request Body</label>
-                        <textarea id="test-req-body" placeholder="{}" style="width:100%; height:120px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem; font-family:monospace;"></textarea>
+                        <textarea id="test-req-body" placeholder="{}"
+                            style="width:100%; height:120px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem; font-family:monospace;"></textarea>
                     </div>
                     <div style="flex:1;">
-                        <label style="font-size:0.75rem; color:var(--text-muted);">Response <span id="test-status" style="margin-left:1rem; font-weight:bold;"></span></label>
-                        <textarea id="test-res-body" readonly placeholder="Response will appear here..." style="width:100%; height:120px; background:rgba(0,0,0,0.2); border:1px solid var(--glass-border); color:var(--success); padding:0.5rem; border-radius:0.25rem; font-family:monospace;"></textarea>
+                        <label style="font-size:0.75rem; color:var(--text-muted);">Response <span id="test-status"
+                                style="margin-left:1rem; font-weight:bold;"></span></label>
+                        <textarea id="test-res-body" readonly placeholder="Response will appear here..."
+                            style="width:100%; height:120px; background:rgba(0,0,0,0.2); border:1px solid var(--glass-border); color:var(--success); padding:0.5rem; border-radius:0.25rem; font-family:monospace;"></textarea>
                     </div>
                 </div>
             </div>
@@ -111,22 +125,27 @@
     </div>
 
     <!-- Unified Create Service Modal -->
-    <div id="create-modal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter:blur(5px); z-index:1000; justify-content:center; align-items:center;">
+    <div id="create-modal" class="modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter:blur(5px); z-index:1000; justify-content:center; align-items:center;">
         <div class="card" style="width:600px; padding:2rem; max-height: 90vh; overflow-y: auto;">
             <h2 class="card-title">Create New Service</h2>
             <div style="margin-top:1.5rem;">
-                <label style="font-size:0.75rem; color:var(--text-muted);">Service Name (Required for Empty/ReqRes, Optional for Swagger/JSON)</label>
-                <input type="text" id="new-service-name" placeholder="e.g. Payments API" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.75rem; border-radius:0.5rem; margin-bottom:1rem;">
-                
+                <label style="font-size:0.75rem; color:var(--text-muted);">Service Name (Required for Empty/ReqRes,
+                    Optional for Swagger/JSON)</label>
+                <input type="text" id="new-service-name" placeholder="e.g. Payments API"
+                    style="width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.75rem; border-radius:0.5rem; margin-bottom:1rem;">
+
                 <label style="font-size:0.75rem; color:var(--text-muted);">Protocol Type</label>
-                <select id="new-service-type" style="width:100%; background:var(--bg-dark); border:1px solid var(--glass-border); color:white; padding:0.75rem; border-radius:0.5rem; margin-bottom:1.5rem;">
+                <select id="new-service-type"
+                    style="width:100%; background:var(--bg-dark); border:1px solid var(--glass-border); color:white; padding:0.75rem; border-radius:0.5rem; margin-bottom:1.5rem;">
                     <option value="REST">REST / HTTP</option>
                     <option value="SOAP">SOAP / XML</option>
                     <option value="MQ">MQ / Async</option>
                 </select>
 
                 <label style="font-size:0.75rem; color:var(--text-muted);">Creation Method</label>
-                <select id="creation-method" onchange="toggleCreationFields()" style="width:100%; background:var(--bg-dark); border:1px solid var(--glass-border); color:white; padding:0.75rem; border-radius:0.5rem; margin-bottom:1.5rem;">
+                <select id="creation-method" onchange="toggleCreationFields()"
+                    style="width:100%; background:var(--bg-dark); border:1px solid var(--glass-border); color:white; padding:0.75rem; border-radius:0.5rem; margin-bottom:1.5rem;">
                     <option value="empty">Empty Service</option>
                     <option value="openapi">From OpenAPI / Swagger (YAML/JSON)</option>
                     <option value="json">From Bulk Rules (JSON Array)</option>
@@ -140,19 +159,29 @@
                 <!-- OpenAPI / JSON Fields -->
                 <div id="field-import" class="creation-field" style="display:none;">
                     <label style="font-size:0.75rem; color:var(--text-muted);">Select File OR Paste Content</label>
-                    <input type="file" id="import-file" onchange="handleFileUpload(event)" style="width:100%; margin-bottom:0.5rem; color:white; font-size:0.875rem;">
-                    <textarea id="import-content" placeholder="Paste your Swagger/OpenAPI or JSON Rules here..." style="width:100%; height:200px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.75rem; border-radius:0.5rem; margin-bottom:1.5rem; font-family:monospace;"></textarea>
+                    <input type="file" id="import-file" onchange="handleFileUpload(event)"
+                        style="width:100%; margin-bottom:0.5rem; color:white; font-size:0.875rem;">
+                    <textarea id="import-content" placeholder="Paste your Swagger/OpenAPI or JSON Rules here..."
+                        style="width:100%; height:200px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.75rem; border-radius:0.5rem; margin-bottom:1.5rem; font-family:monospace;"></textarea>
                 </div>
 
                 <!-- Req / Res Fields -->
                 <div id="field-reqres" class="creation-field" style="display:none;">
-                    <label style="font-size:0.75rem; color:var(--text-muted);">Sample Request Body (Optional JSON Matcher)</label>
-                    <input type="file" id="req-file" onchange="handleReqFileUpload(event)" style="width:100%; margin-bottom:0.5rem; color:white; font-size:0.875rem;" accept=".json,.xml,.txt">
-                    <textarea id="req-content" placeholder='{"id": 123}' style="width:100%; height:100px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.75rem; border-radius:0.5rem; margin-bottom:1rem; font-family:monospace;"></textarea>
-                    
-                    <label style="font-size:0.75rem; color:var(--text-muted);">Sample Response Body (What the mock will return)</label>
-                    <input type="file" id="res-file" onchange="handleResFileUpload(event)" style="width:100%; margin-bottom:0.5rem; color:white; font-size:0.875rem;" accept=".json,.xml,.txt">
-                    <textarea id="res-content" placeholder='{"status": "success"}' style="width:100%; height:100px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.75rem; border-radius:0.5rem; margin-bottom:1.5rem; font-family:monospace;"></textarea>
+                    <label style="font-size:0.75rem; color:var(--text-muted);">Sample Request Body (Optional JSON
+                        Matcher)</label>
+                    <input type="file" id="req-file" onchange="handleReqFileUpload(event)"
+                        style="width:100%; margin-bottom:0.5rem; color:white; font-size:0.875rem;"
+                        accept=".json,.xml,.txt">
+                    <textarea id="req-content" placeholder='{"id": 123}'
+                        style="width:100%; height:100px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.75rem; border-radius:0.5rem; margin-bottom:1rem; font-family:monospace;"></textarea>
+
+                    <label style="font-size:0.75rem; color:var(--text-muted);">Sample Response Body (What the mock will
+                        return)</label>
+                    <input type="file" id="res-file" onchange="handleResFileUpload(event)"
+                        style="width:100%; margin-bottom:0.5rem; color:white; font-size:0.875rem;"
+                        accept=".json,.xml,.txt">
+                    <textarea id="res-content" placeholder='{"status": "success"}'
+                        style="width:100%; height:100px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.75rem; border-radius:0.5rem; margin-bottom:1.5rem; font-family:monospace;"></textarea>
                 </div>
 
                 <div style="display:flex; gap:1rem; justify-content:flex-end;">
@@ -169,7 +198,7 @@
         function switchTab(tabId) {
             document.getElementById('pane-live').style.display = tabId === 'live' ? 'block' : 'none';
             document.getElementById('pane-test').style.display = tabId === 'test' ? 'block' : 'none';
-            
+
             const btnLive = document.getElementById('tab-live');
             const btnTest = document.getElementById('tab-test');
 
@@ -325,7 +354,7 @@
                 } else if (method === 'openapi' || method === 'json') {
                     const content = document.getElementById('import-content').value;
                     if (!content) return alert("Please select a file or paste content to import.");
-                    
+
                     let endpoint = method === 'openapi' ? '/api/admin/import/openapi' : '/api/admin/import/json';
                     let payload = method === 'openapi' ? { spec: content, name, type } : { rules: JSON.parse(content), name: name || 'Bulk JSON Import', type };
 
@@ -349,7 +378,7 @@
                         responseBody: resContent,
                         priority: 1
                     };
-                    
+
                     if (reqContent) {
                         try {
                             const reqJson = JSON.parse(reqContent);
@@ -408,7 +437,7 @@
 
             const resBodyEl = document.getElementById('test-res-body');
             const statusEl = document.getElementById('test-status');
-            
+
             resBodyEl.value = "Sending...";
             statusEl.innerText = "";
             statusEl.style.color = "var(--text-muted)";
@@ -418,7 +447,7 @@
                     method: method,
                     headers: {}
                 };
-                
+
                 if (method !== 'GET' && method !== 'HEAD' && body) {
                     options.body = body;
                     options.headers['Content-Type'] = 'application/json'; // Default assumption
@@ -427,20 +456,20 @@
                 const startTime = Date.now();
                 const resp = await fetch(path, options);
                 const timeTaken = Date.now() - startTime;
-                
+
                 const responseText = await resp.text();
-                
+
                 statusEl.innerText = `${resp.status} ${resp.statusText} (${timeTaken}ms)`;
                 statusEl.style.color = resp.ok ? "var(--success)" : "var(--error)";
-                
+
                 try {
                     // Try to pretty print JSON
                     const json = JSON.parse(responseText);
                     resBodyEl.value = JSON.stringify(json, null, 2);
-                } catch(e) {
+                } catch (e) {
                     resBodyEl.value = responseText;
                 }
-                
+
                 // Refresh dashboard immediately to show log
                 refreshData();
             } catch (e) {
@@ -454,4 +483,5 @@
         refreshData();
     </script>
 </body>
+
 </html>
