@@ -81,6 +81,13 @@
                 <label style="font-size:0.75rem; color:var(--text-muted);">Service Name (Required for Empty/ReqRes, Optional for Swagger/JSON)</label>
                 <input type="text" id="new-service-name" placeholder="e.g. Payments API" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.75rem; border-radius:0.5rem; margin-bottom:1rem;">
                 
+                <label style="font-size:0.75rem; color:var(--text-muted);">Protocol Type</label>
+                <select id="new-service-type" style="width:100%; background:var(--bg-dark); border:1px solid var(--glass-border); color:white; padding:0.75rem; border-radius:0.5rem; margin-bottom:1.5rem;">
+                    <option value="REST">REST / HTTP</option>
+                    <option value="SOAP">SOAP / XML</option>
+                    <option value="MQ">MQ / Async</option>
+                </select>
+
                 <label style="font-size:0.75rem; color:var(--text-muted);">Creation Method</label>
                 <select id="creation-method" onchange="toggleCreationFields()" style="width:100%; background:var(--bg-dark); border:1px solid var(--glass-border); color:white; padding:0.75rem; border-radius:0.5rem; margin-bottom:1.5rem;">
                     <option value="empty">Empty Service</option>
@@ -89,14 +96,8 @@
                     <option value="reqres">From Request / Response Pair</option>
                 </select>
 
-                <!-- Empty Service Fields -->
+                <!-- Empty Service Fields (Now Empty) -->
                 <div id="field-empty" class="creation-field">
-                    <label style="font-size:0.75rem; color:var(--text-muted);">Protocol Type</label>
-                    <select id="new-service-type" style="width:100%; background:var(--bg-dark); border:1px solid var(--glass-border); color:white; padding:0.75rem; border-radius:0.5rem; margin-bottom:1.5rem;">
-                        <option value="REST">REST / HTTP</option>
-                        <option value="SOAP">SOAP / XML</option>
-                        <option value="MQ">MQ / Async</option>
-                    </select>
                 </div>
 
                 <!-- OpenAPI / JSON Fields -->
@@ -243,6 +244,7 @@
         async function submitCreation() {
             const method = document.getElementById('creation-method').value;
             const name = document.getElementById('new-service-name').value;
+            const type = document.getElementById('new-service-type').value;
 
             if (method === 'empty' || method === 'reqres') {
                 if (!name) return alert("Service Name is required for this method.");
@@ -250,7 +252,6 @@
 
             try {
                 if (method === 'empty') {
-                    const type = document.getElementById('new-service-type').value;
                     const resp = await fetch('/api/admin/services', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'X-API-KEY': API_KEY },
@@ -263,7 +264,7 @@
                     if (!content) return alert("Please select a file or paste content to import.");
                     
                     let endpoint = method === 'openapi' ? '/api/admin/import/openapi' : '/api/admin/import/json';
-                    let payload = method === 'openapi' ? { spec: content, name } : { rules: JSON.parse(content), name: name || 'Bulk JSON Import' };
+                    let payload = method === 'openapi' ? { spec: content, name, type } : { rules: JSON.parse(content), name: name || 'Bulk JSON Import', type };
 
                     const resp = await fetch(endpoint, {
                         method: 'POST',
@@ -302,7 +303,7 @@
                     const resp = await fetch('/api/admin/import/json', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'X-API-KEY': API_KEY },
-                        body: JSON.stringify({ rules: [rule], name })
+                        body: JSON.stringify({ rules: [rule], name, type })
                     });
                     if (!resp.ok) throw new Error("Failed to create service from Req/Res pair");
                 }

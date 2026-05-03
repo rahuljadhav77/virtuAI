@@ -24,7 +24,7 @@ public class ImporterService {
     }
 
     @Transactional
-    public VirtualServiceEntity importOpenApi(String spec, String serviceName) {
+    public VirtualServiceEntity importOpenApi(String spec, String serviceName, String type) {
         SwaggerParseResult result = new OpenAPIV3Parser().readContents(spec, null, new ParseOptions());
         OpenAPI openAPI = result.getOpenAPI();
         
@@ -34,7 +34,7 @@ public class ImporterService {
 
         VirtualServiceEntity vService = new VirtualServiceEntity();
         vService.setName(serviceName != null && !serviceName.isEmpty() ? serviceName : openAPI.getInfo().getTitle());
-        vService.setType("REST");
+        vService.setType(type != null ? type : "REST");
         vService.setEnabled(true);
         vService = serviceRepository.save(vService);
 
@@ -58,10 +58,10 @@ public class ImporterService {
     }
 
     @Transactional
-    public VirtualServiceEntity importJsonRules(List<VirtualRuleEntity> rules, String serviceName) {
+    public VirtualServiceEntity importJsonRules(List<VirtualRuleEntity> rules, String serviceName, String type) {
         VirtualServiceEntity vService = new VirtualServiceEntity();
         vService.setName(serviceName);
-        vService.setType("BULK_JSON");
+        vService.setType(type != null ? type : "BULK_JSON");
         vService.setEnabled(true);
         vService = serviceRepository.save(vService);
         

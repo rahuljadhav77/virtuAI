@@ -26,13 +26,15 @@ public class ImporterController {
     public VirtualServiceEntity importOpenApi(@RequestBody Map<String, String> request) {
         String spec = request.get("spec");
         String name = request.get("name");
-        return importerService.importOpenApi(spec, name);
+        String type = request.get("type");
+        return importerService.importOpenApi(spec, name, type);
     }
 
     @PostMapping("/json")
     public VirtualServiceEntity importJson(@RequestBody Map<String, Object> request) {
         String name = (String) request.get("name");
+        String type = (String) request.get("type");
         List<VirtualRuleEntity> rules = objectMapper.convertValue(request.get("rules"), new TypeReference<List<VirtualRuleEntity>>() {});
-        return importerService.importJsonRules(rules, name);
+        return importerService.importJsonRules(rules, name, type);
     }
 }
