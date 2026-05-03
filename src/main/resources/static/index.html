@@ -42,6 +42,34 @@
         </div>
 
         <div class="main-content">
+            <!-- Built-in Test Client -->
+            <div class="card" style="grid-column: 1 / -1;">
+                <div class="card-header">
+                    <h2 class="card-title">Test Client</h2>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">Send requests to your virtualized endpoints</span>
+                </div>
+                <div style="display:flex; gap:1rem; margin-bottom:1rem;">
+                    <select id="test-method" style="background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem;">
+                        <option value="GET">GET</option>
+                        <option value="POST">POST</option>
+                        <option value="PUT">PUT</option>
+                        <option value="DELETE">DELETE</option>
+                    </select>
+                    <input type="text" id="test-path" placeholder="/your-mock-endpoint" style="flex:1; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem;">
+                    <button onclick="runTest()">Send</button>
+                </div>
+                <div style="display:flex; gap:1rem;">
+                    <div style="flex:1;">
+                        <label style="font-size:0.75rem; color:var(--text-muted);">Request Body</label>
+                        <textarea id="test-req-body" placeholder="{}" style="width:100%; height:120px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem; font-family:monospace;"></textarea>
+                    </div>
+                    <div style="flex:1;">
+                        <label style="font-size:0.75rem; color:var(--text-muted);">Response <span id="test-status" style="margin-left:1rem; font-weight:bold;"></span></label>
+                        <textarea id="test-res-body" readonly placeholder="Response will appear here..." style="width:100%; height:120px; background:rgba(0,0,0,0.2); border:1px solid var(--glass-border); color:var(--success); padding:0.5rem; border-radius:0.25rem; font-family:monospace;"></textarea>
+                    </div>
+                </div>
+            </div>
+
             <div class="card">
                 <div class="card-header">
                     <h2 class="card-title">Live Traffic Logs</h2>
@@ -332,6 +360,58 @@
                 btn.innerText = 'Start Recording';
                 btn.classList.add('secondary');
                 btn.style.background = 'transparent';
+            }
+        }
+
+        async function runTest() {
+            const method = document.getElementById('test-method').value;
+            let path = document.getElementById('test-path').value;
+            const body = document.getElementById('test-req-body').value;
+
+            if (!path) path = "/";
+            if (!path.startsWith("/")) path = "/" + path;
+
+            const resBodyEl = document.getElementById('test-res-body');
+            const statusEl = document.getElementById('test-status');
+            
+            resBodyEl.value = "Sending...";
+            statusEl.innerText = "";
+            statusEl.style.color = "var(--text-muted)";
+
+            try {
+                const options = {
+                    method: method,
+                    headers: {}
+                };
+                
+                if (method !== 'GET' && method !== 'HEAD' && body) {
+                    options.body = body;
+                    options.headers['Content-Type'] = 'application/json'; // Default assumption
+                }
+
+                const startTime = Date.now();
+                const resp = await fetch(path, options);
+                const timeTaken = Date.now() - startTime;
+                
+                const responseText = await resp.text();
+                
+                statusEl.innerText = `${resp.status} ${resp.statusText} (${timeTaken}ms)`;
+                statusEl.style.color = resp.ok ? "var(--success)" : "var(--error)";
+                
+                try {
+                    // Try to pretty print JSON
+                    const json = JSON.parse(responseText);
+                    resBodyEl.value = JSON.stringify(json, null, 2);
+                } catch(e) {
+                    resBodyEl.value = responseText;
+                }
+                
+                // Refresh dashboard immediately to show log
+                refreshData();
+            } catch (e) {
+                statusEl.innerText = "Error";
+                statusEl.style.color = "var(--error)";
+                resBodyEl.value = e.message;
             }
         }
 
