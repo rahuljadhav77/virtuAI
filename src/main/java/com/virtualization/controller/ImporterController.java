@@ -30,6 +30,12 @@ public class ImporterController {
         return importerService.importOpenApi(spec, name, type);
     }
 
+    @PostMapping("/openapi/preview")
+    public List<VirtualRuleEntity> previewOpenApi(@RequestBody Map<String, String> request) {
+        String spec = request.get("spec");
+        return importerService.previewOpenApi(spec);
+    }
+
     @PostMapping("/json")
     public VirtualServiceEntity importJson(@RequestBody Map<String, Object> request) {
         String name = (String) request.get("name");

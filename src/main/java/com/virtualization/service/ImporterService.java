@@ -56,6 +56,29 @@ public class ImporterService {
 
         return vService;
     }
+    public List<VirtualRuleEntity> previewOpenApi(String spec) {
+        SwaggerParseResult result = new OpenAPIV3Parser().readContents(spec, null, new ParseOptions());
+        OpenAPI openAPI = result.getOpenAPI();
+        
+        if (openAPI == null) {
+            throw new RuntimeException("Failed to parse OpenAPI spec: " + result.getMessages());
+        }
+
+        List<VirtualRuleEntity> rules = new java.util.ArrayList<>();
+        openAPI.getPaths().forEach((path, pathItem) -> {
+            pathItem.readOperationsMap().forEach((method, operation) -> {
+                VirtualRuleEntity rule = new VirtualRuleEntity();
+                rule.setName(operation.getOperationId() != null ? operation.getOperationId() : method + " " + path);
+                rule.setMethod(method.name());
+                rule.setPathPattern("^" + path.replaceAll("\\{.*?\\}", "[^/]+") + "$");
+                rule.setStatusCode(200);
+                rule.setResponseBody("{\"message\": \"Mock response for " + (operation.getOperationId() != null ? operation.getOperationId() : path) + "\"}");
+                rule.setPriority(1);
+                rules.add(rule);
+            });
+        });
+        return rules;
+    }
 
     @Transactional
     public VirtualServiceEntity importJsonRules(List<VirtualRuleEntity> rules, String serviceName, String type) {

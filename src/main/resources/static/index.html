@@ -67,8 +67,11 @@
                 <div class="card">
                     <div class="card-header">
                         <h2 class="card-title">Live Traffic Logs</h2>
-                        <button class="secondary" onclick="toggleRecording()" id="btn-recording">Start
-                            Recording</button>
+                        <div style="display:flex; gap:0.5rem;">
+                            <button class="secondary" onclick="exportLogs('json')" style="font-size:0.75rem; padding:4px 8px;">Export JSON</button>
+                            <button class="secondary" onclick="exportLogs('har')" style="font-size:0.75rem; padding:4px 8px;">Export HAR</button>
+                            <button class="secondary" onclick="toggleRecording()" id="btn-recording" style="margin-left:0.5rem;">Start Recording</button>
+                        </div>
                     </div>
                     <table>
                         <thead>
@@ -146,6 +149,7 @@
     <div id="create-modal" class="modal"
         style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter:blur(5px); z-index:1000; justify-content:center; align-items:center;">
         <div class="card" style="width:600px; padding:2rem; max-height: 90vh; overflow-y: auto;">
+            <!-- ... create modal content ... -->
             <h2 class="card-title">Create New Service</h2>
             <div style="margin-top:1.5rem;">
                 <label style="font-size:0.75rem; color:var(--text-muted);">Service Name (Required for Empty/ReqRes,
@@ -180,7 +184,15 @@
                     <input type="file" id="import-file" onchange="handleFileUpload(event)"
                         style="width:100%; margin-bottom:0.5rem; color:white; font-size:0.875rem;">
                     <textarea id="import-content" placeholder="Paste your Swagger/OpenAPI or JSON Rules here..."
-                        style="width:100%; height:200px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.75rem; border-radius:0.5rem; margin-bottom:1.5rem; font-family:monospace;"></textarea>
+                        style="width:100%; height:200px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.75rem; border-radius:0.5rem; margin-bottom:0.5rem; font-family:monospace;"></textarea>
+                    
+                    <div style="display:flex; justify-content:flex-end; margin-bottom:1rem;">
+                        <button class="secondary" id="btn-preview-import" onclick="previewImport()" style="display:none; font-size:0.75rem; padding:0.4rem 0.8rem;">Preview Endpoints</button>
+                    </div>
+                    
+                    <div id="import-preview-container" style="display:none; max-height:150px; overflow-y:auto; background:rgba(0,0,0,0.2); border:1px solid var(--glass-border); padding:0.5rem; border-radius:0.25rem; margin-bottom:1.5rem;">
+                        <!-- Preview rules will be injected here -->
+                    </div>
                 </div>
 
                 <!-- Req / Res Fields -->
@@ -210,8 +222,112 @@
         </div>
     </div>
 
+    <!-- Rule Management Modal -->
+    <div id="rule-modal" class="modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter:blur(5px); z-index:1000; justify-content:center; align-items:center;">
+        <div class="card" style="width:800px; padding:2rem; max-height: 90vh; display:flex; flex-direction:column;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <h2 class="card-title">Manage Rules: <span id="rule-modal-service-name" style="color:var(--primary);"></span></h2>
+                <button class="secondary" onclick="closeRuleModal()">Close</button>
+            </div>
+            
+            <div style="display:flex; gap:1rem; flex:1; min-height:0;">
+                <!-- Rule List -->
+                <div style="width:250px; border-right:1px solid var(--glass-border); padding-right:1rem; overflow-y:auto; display:flex; flex-direction:column;">
+                    <button onclick="editRule(null)" style="margin-bottom:1rem; width:100%;">+ New Rule</button>
+                    <div id="rule-list-container" style="display:flex; flex-direction:column; gap:0.5rem;">
+                        <!-- Rule items will be injected here -->
+                    </div>
+                </div>
+
+                <!-- Rule Editor -->
+                <div style="flex:1; padding-left:1rem; overflow-y:auto; display:flex; flex-direction:column;">
+                    <input type="hidden" id="edit-rule-id">
+                    
+                    <div style="display:flex; gap:1rem; margin-bottom:1rem;">
+                        <div style="flex:1;">
+                            <label style="font-size:0.75rem; color:var(--text-muted);">Rule Name</label>
+                            <input type="text" id="edit-rule-name" placeholder="e.g. Get User Success" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem;">
+                        </div>
+                        <div style="width:100px;">
+                            <label style="font-size:0.75rem; color:var(--text-muted);">Priority</label>
+                            <input type="number" id="edit-rule-priority" value="0" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem;">
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:1rem; margin-bottom:1rem;">
+                        <div style="flex:1;">
+                            <label style="font-size:0.75rem; color:var(--text-muted);">JSONPath Condition (Optional)</label>
+                            <input type="text" id="edit-rule-jsonpath" placeholder="$.user.id" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem; font-family:monospace;">
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-size:0.75rem; color:var(--text-muted);">JSONPath Value (Regex)</label>
+                            <input type="text" id="edit-rule-jsonvalue" placeholder="^123$" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem; font-family:monospace;">
+                        </div>
+                        <div style="width:120px;">
+                            <label style="font-size:0.75rem; color:var(--text-muted);">Delay (ms)</label>
+                            <input type="number" id="edit-rule-delay" value="0" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem;">
+                        </div>
+                    </div>
+
+                    <!-- HTTP Specific Fields -->
+                    <div id="rule-http-fields">
+                        <div style="display:flex; gap:1rem; margin-bottom:1rem;">
+                            <div style="width:120px;">
+                                <label style="font-size:0.75rem; color:var(--text-muted);">Method</label>
+                                <select id="edit-rule-method" style="width:100%; background:var(--bg-dark); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem;">
+                                    <option value="GET">GET</option>
+                                    <option value="POST">POST</option>
+                                    <option value="PUT">PUT</option>
+                                    <option value="DELETE">DELETE</option>
+                                    <option value="PATCH">PATCH</option>
+                                </select>
+                            </div>
+                            <div style="flex:1;">
+                                <label style="font-size:0.75rem; color:var(--text-muted);">Path Pattern (Regex)</label>
+                                <input type="text" id="edit-rule-path" placeholder="^/api/users/.*$" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem; font-family:monospace;">
+                            </div>
+                            <div style="width:120px;">
+                                <label style="font-size:0.75rem; color:var(--text-muted);">Status Code</label>
+                                <input type="number" id="edit-rule-status" value="200" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MQ Specific Fields -->
+                    <div id="rule-mq-fields" style="display:none;">
+                        <div style="display:flex; gap:1rem; margin-bottom:1rem;">
+                            <div style="flex:1;">
+                                <label style="font-size:0.75rem; color:var(--text-muted);">Input Queue Name</label>
+                                <input type="text" id="edit-rule-queue" placeholder="DEV.QUEUE.1" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem; font-family:monospace;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="flex:1; display:flex; flex-direction:column; margin-bottom:1rem;">
+                        <label style="font-size:0.75rem; color:var(--text-muted);">Response Body (Supports Mustache / Groovy script if enabled)</label>
+                        <textarea id="edit-rule-response" style="flex:1; min-height:150px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.75rem; border-radius:0.25rem; font-family:'Fira Code',monospace; font-size:0.8rem;"></textarea>
+                    </div>
+
+                    <div style="display:flex; flex-direction:column; margin-bottom:1rem;">
+                        <label style="font-size:0.75rem; color:var(--text-muted);">Groovy Script (Advanced)</label>
+                        <textarea id="edit-rule-script" placeholder="def process(request, response) { ... }" style="height:80px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.75rem; border-radius:0.25rem; font-family:'Fira Code',monospace; font-size:0.8rem;"></textarea>
+                    </div>
+
+                    <div style="display:flex; gap:1rem; justify-content:flex-end; margin-top:auto;">
+                        <button class="secondary" style="border-color:var(--error); color:var(--error); margin-right:auto;" onclick="deleteCurrentRule()" id="btn-delete-rule" style="display:none;">Delete Rule</button>
+                        <button onclick="saveRule()">Save Rule</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+    </div>
+
     <script>
         const API_KEY = 'enterprise-secret';
+
+        // --- Tab Logic ---
 
         function switchTab(tabId) {
             document.getElementById('pane-live').style.display = tabId === 'live' ? 'block' : 'none';
@@ -248,17 +364,22 @@
 
         // Global store for rules (used by test client)
         let _allRules = [];
+        let _allMqRules = [];
+        let _allLogs = [];
 
         async function refreshData() {
             try {
                 const services = await fetchData('/api/admin/services');
                 const rules = await fetchData('/api/admin/rules/http');
+                const mqRules = await fetchData('/api/admin/rules/mq');
                 const logs = await fetchData('/api/recorder/logs');
 
                 _allRules = rules;
+                _allMqRules = mqRules;
+                _allLogs = logs;
 
                 document.getElementById('stat-services').innerText = services.length;
-                document.getElementById('stat-rules').innerText = rules.length;
+                document.getElementById('stat-rules').innerText = rules.length + mqRules.length;
                 document.getElementById('stat-traffic').innerText = logs.length;
 
                 renderTraffic(logs);
@@ -305,6 +426,7 @@
                         <div style="font-size: 0.75rem; color: var(--text-muted)">${s.enabled ? 'Active' : 'Disabled'}</div>
                     </div>
                     <div style="display:flex; gap:0.5rem; align-items:center;">
+                        <button class="secondary" style="padding:4px 8px; font-size:0.75rem; border-color:var(--primary); color:var(--primary);" onclick="openRuleModal(${s.id}, '${s.name.replace(/'/g, "\\'")}', '${s.type}')">Rules</button>
                         <button class="secondary" style="padding:4px 8px; font-size:0.75rem; border-color:var(--error); color:var(--error);" onclick="deleteService(${s.id})">Delete</button>
                         <div class="status-indicator ${s.enabled ? 'status-online' : ''}" style="margin: 0"></div>
                     </div>
@@ -337,6 +459,13 @@
             document.getElementById('field-empty').style.display = method === 'empty' ? 'block' : 'none';
             document.getElementById('field-import').style.display = (method === 'openapi' || method === 'json') ? 'block' : 'none';
             document.getElementById('field-reqres').style.display = method === 'reqres' ? 'block' : 'none';
+            
+            if (method === 'openapi') {
+                document.getElementById('btn-preview-import').style.display = 'block';
+            } else {
+                document.getElementById('btn-preview-import').style.display = 'none';
+                document.getElementById('import-preview-container').style.display = 'none';
+            }
         }
 
         function handleFileUpload(event) {
@@ -367,6 +496,42 @@
                 document.getElementById('res-content').value = e.target.result;
             };
             reader.readAsText(file);
+        }
+
+        async function previewImport() {
+            const content = document.getElementById('import-content').value;
+            if (!content) return alert("Please paste OpenAPI content first.");
+            
+            const btn = document.getElementById('btn-preview-import');
+            btn.innerText = 'Loading...';
+            
+            try {
+                const resp = await fetch('/api/admin/import/openapi/preview', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-API-KEY': API_KEY },
+                    body: JSON.stringify({ spec: content })
+                });
+                if (!resp.ok) throw new Error("Failed to parse OpenAPI spec");
+                
+                const rules = await resp.json();
+                const container = document.getElementById('import-preview-container');
+                container.style.display = 'block';
+                
+                if (rules.length === 0) {
+                    container.innerHTML = '<span style="font-size:0.75rem; color:var(--text-muted);">No endpoints found in spec.</span>';
+                } else {
+                    container.innerHTML = rules.map(r => `
+                        <div style="display:flex; gap:0.5rem; align-items:center; padding:0.25rem 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+                            <span style="font-size:0.6rem; font-weight:700; color:var(--primary);">${r.method}</span>
+                            <span style="font-size:0.75rem; color:white; font-family:monospace;">${r.pathPattern.replace('^', '').replace('$', '')}</span>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {
+                alert(e.message);
+            } finally {
+                btn.innerText = 'Preview Endpoints';
+            }
         }
 
         async function submitCreation() {
@@ -563,6 +728,269 @@
             const pathInput = document.getElementById('test-path');
             pathInput.style.borderColor = 'var(--primary)';
             setTimeout(() => { pathInput.style.borderColor = 'var(--glass-border)'; }, 800);
+        }
+
+        function exportLogs(format) {
+            if (!_allLogs || _allLogs.length === 0) {
+                alert("No traffic logs to export.");
+                return;
+            }
+
+            let dataStr = "";
+            let fileName = "";
+
+            if (format === 'json') {
+                dataStr = JSON.stringify(_allLogs, null, 2);
+                fileName = "traffic_logs.json";
+            } else if (format === 'har') {
+                // Generate a basic HAR structure from the logs
+                const har = {
+                    log: {
+                        version: "1.2",
+                        creator: { name: "VirtuAI Platform", version: "1.0" },
+                        entries: _allLogs.map(log => ({
+                            startedDateTime: log.timestamp ? log.timestamp + "Z" : new Date().toISOString(),
+                            time: 0,
+                            request: {
+                                method: log.method,
+                                url: log.path,
+                                httpVersion: "HTTP/1.1",
+                                cookies: [],
+                                headers: [],
+                                queryString: [],
+                                postData: log.requestBody ? { mimeType: "application/json", text: log.requestBody } : undefined,
+                                headersSize: -1,
+                                bodySize: log.requestBody ? log.requestBody.length : 0
+                            },
+                            response: {
+                                status: log.statusCode,
+                                statusText: "",
+                                httpVersion: "HTTP/1.1",
+                                cookies: [],
+                                headers: [],
+                                content: {
+                                    size: log.responseBody ? log.responseBody.length : 0,
+                                    mimeType: "application/json",
+                                    text: log.responseBody
+                                },
+                                redirectURL: "",
+                                headersSize: -1,
+                                bodySize: log.responseBody ? log.responseBody.length : 0
+                            },
+                            cache: {},
+                            timings: { send: 0, wait: 0, receive: 0 }
+                        }))
+                    }
+                };
+                dataStr = JSON.stringify(har, null, 2);
+                fileName = "traffic_logs.har";
+            }
+
+            // Create a blob and trigger download
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // --- Rule Management UI Logic ---
+        let _currentServiceId = null;
+        let _currentServiceType = null;
+        let _currentRules = [];
+
+        function openRuleModal(serviceId, serviceName, serviceType) {
+            _currentServiceId = serviceId;
+            _currentServiceType = serviceType;
+            
+            document.getElementById('rule-modal-service-name').innerText = serviceName;
+            document.getElementById('rule-modal').style.display = 'flex';
+            
+            if (serviceType === 'MQ') {
+                document.getElementById('rule-http-fields').style.display = 'none';
+                document.getElementById('rule-mq-fields').style.display = 'block';
+                _currentRules = _allMqRules.filter(r => String(r.serviceId) === String(serviceId));
+            } else {
+                document.getElementById('rule-http-fields').style.display = 'block';
+                document.getElementById('rule-mq-fields').style.display = 'none';
+                _currentRules = _allRules.filter(r => String(r.serviceId) === String(serviceId));
+            }
+            
+            renderRuleList();
+            
+            // Auto-select first rule if exists, or open new rule form
+            if (_currentRules.length > 0) {
+                editRule(_currentRules[0]);
+            } else {
+                editRule(null);
+            }
+        }
+
+        function closeRuleModal() {
+            document.getElementById('rule-modal').style.display = 'none';
+        }
+
+        function renderRuleList() {
+            const container = document.getElementById('rule-list-container');
+            container.innerHTML = _currentRules.map(r => {
+                let badge = '';
+                let pathOrQueue = '';
+                
+                if (_currentServiceType === 'MQ') {
+                    badge = `<span style="font-size:0.65rem; font-weight:700; color:#b061fe;">MQ</span>`;
+                    pathOrQueue = r.inputQueue || 'Any Queue';
+                } else {
+                    const methodColor = {
+                        'GET': '#61affe', 'POST': '#49cc90', 'PUT': '#fca130', 'DELETE': '#f93e3e'
+                    }[r.method] || 'var(--text-muted)';
+                    badge = `<span style="font-size:0.65rem; font-weight:700; color:${methodColor};">${r.method}</span>`;
+                    pathOrQueue = r.pathPattern || '/';
+                }
+
+                return `
+                    <div onclick="editRuleById(${r.id})" style="padding:0.75rem; background:rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:0.5rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                        <div style="font-weight:600; font-size:0.85rem; margin-bottom:0.25rem;">${r.name || 'Unnamed Rule'}</div>
+                        <div style="display:flex; gap:0.5rem; align-items:center;">
+                            ${badge}
+                            <span style="font-size:0.7rem; color:var(--text-muted); font-family:monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${pathOrQueue}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function editRuleById(id) {
+            const rule = _currentRules.find(r => r.id === id);
+            if (rule) editRule(rule);
+        }
+
+        function editRule(rule) {
+            const btnDelete = document.getElementById('btn-delete-rule');
+            if (rule) {
+                document.getElementById('edit-rule-id').value = rule.id;
+                document.getElementById('edit-rule-name').value = rule.name || '';
+                document.getElementById('edit-rule-priority').value = rule.priority || 0;
+                document.getElementById('edit-rule-jsonpath').value = rule.jsonPathCondition || '';
+                document.getElementById('edit-rule-jsonvalue').value = rule.jsonPathValue || '';
+                document.getElementById('edit-rule-delay').value = rule.delayMs || 0;
+                document.getElementById('edit-rule-script').value = rule.script || '';
+                
+                if (_currentServiceType === 'MQ') {
+                    document.getElementById('edit-rule-queue').value = rule.inputQueue || '';
+                    document.getElementById('edit-rule-response').value = rule.responsePayload || '';
+                } else {
+                    document.getElementById('edit-rule-method').value = rule.method || 'GET';
+                    document.getElementById('edit-rule-path').value = rule.pathPattern || '';
+                    document.getElementById('edit-rule-status').value = rule.statusCode || 200;
+                    document.getElementById('edit-rule-response').value = rule.responseBody || '';
+                }
+                
+                btnDelete.style.display = 'block';
+            } else {
+                // Clear for new rule
+                document.getElementById('edit-rule-id').value = '';
+                document.getElementById('edit-rule-name').value = '';
+                document.getElementById('edit-rule-priority').value = 0;
+                document.getElementById('edit-rule-jsonpath').value = '';
+                document.getElementById('edit-rule-jsonvalue').value = '';
+                document.getElementById('edit-rule-delay').value = 0;
+                document.getElementById('edit-rule-script').value = '';
+                
+                if (_currentServiceType === 'MQ') {
+                    document.getElementById('edit-rule-queue').value = 'DEV.QUEUE.1';
+                    document.getElementById('edit-rule-response').value = '{\n  "status": "processed"\n}';
+                } else {
+                    document.getElementById('edit-rule-method').value = 'GET';
+                    document.getElementById('edit-rule-path').value = '^/api/.*$';
+                    document.getElementById('edit-rule-status').value = 200;
+                    document.getElementById('edit-rule-response').value = '{\n  "message": "success"\n}';
+                }
+                
+                btnDelete.style.display = 'none';
+            }
+        }
+
+        async function saveRule() {
+            const id = document.getElementById('edit-rule-id').value;
+            let payload = {
+                serviceId: _currentServiceId,
+                name: document.getElementById('edit-rule-name').value,
+                priority: parseInt(document.getElementById('edit-rule-priority').value) || 0,
+                jsonPathCondition: document.getElementById('edit-rule-jsonpath').value,
+                jsonPathValue: document.getElementById('edit-rule-jsonvalue').value,
+                delayMs: parseInt(document.getElementById('edit-rule-delay').value) || 0,
+                script: document.getElementById('edit-rule-script').value
+            };
+
+            let url = '/api/admin/rules/http';
+            if (_currentServiceType === 'MQ') {
+                url = '/api/admin/rules/mq';
+                payload.inputQueue = document.getElementById('edit-rule-queue').value;
+                payload.responsePayload = document.getElementById('edit-rule-response').value;
+            } else {
+                payload.method = document.getElementById('edit-rule-method').value;
+                payload.pathPattern = document.getElementById('edit-rule-path').value;
+                payload.statusCode = parseInt(document.getElementById('edit-rule-status').value) || 200;
+                payload.responseBody = document.getElementById('edit-rule-response').value;
+            }
+
+            try {
+                let method = 'POST';
+
+                if (id) {
+                    url += `/${id}`;
+                    method = 'PUT';
+                }
+
+                const resp = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json', 'X-API-KEY': API_KEY },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!resp.ok) throw new Error("Failed to save rule");
+                
+                await refreshData();
+                _currentRules = (_currentServiceType === 'MQ' ? _allMqRules : _allRules).filter(r => String(r.serviceId) === String(_currentServiceId));
+                renderRuleList();
+                
+                if (!id) {
+                    const savedRule = _currentRules[_currentRules.length - 1];
+                    editRule(savedRule);
+                } else {
+                    alert("Rule saved successfully!");
+                }
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        async function deleteCurrentRule() {
+            const id = document.getElementById('edit-rule-id').value;
+            if (!id) return;
+            
+            if (!confirm("Are you sure you want to delete this rule?")) return;
+            
+            try {
+                const url = _currentServiceType === 'MQ' ? `/api/admin/rules/mq/${id}` : `/api/admin/rules/http/${id}`;
+                const resp = await fetch(url, {
+                    method: 'DELETE',
+                    headers: { 'X-API-KEY': API_KEY }
+                });
+                
+                if (!resp.ok) throw new Error("Failed to delete rule");
+                
+                await refreshData();
+                _currentRules = (_currentServiceType === 'MQ' ? _allMqRules : _allRules).filter(r => String(r.serviceId) === String(_currentServiceId));
+                renderRuleList();
+                editRule(null);
+            } catch (e) {
+                alert(e.message);
+            }
         }
 
         setInterval(refreshData, 3000);
