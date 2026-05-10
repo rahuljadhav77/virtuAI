@@ -11,4 +11,5 @@ public class VirtualResponse {
     private Map<String, String> headers;
     private String body;
     private long delayMs;
+    private Long serviceId;
 }

@@ -66,13 +66,23 @@
 
                 <div class="card">
                     <div class="card-header">
+                    <div>
                         <h2 class="card-title">Live Traffic Logs</h2>
+<<<<<<< HEAD
                         <div style="display:flex; gap:0.5rem;">
                             <button class="secondary" onclick="exportLogs('json')" style="font-size:0.75rem; padding:4px 8px;">Export JSON</button>
                             <button class="secondary" onclick="exportLogs('har')" style="font-size:0.75rem; padding:4px 8px;">Export HAR</button>
                             <button class="secondary" onclick="toggleRecording()" id="btn-recording" style="margin-left:0.5rem;">Start Recording</button>
                         </div>
+=======
+                        <div id="traffic-filter-label" style="font-size:0.85rem; color:var(--text-muted); margin-top:0.25rem;">Showing all traffic</div>
+>>>>>>> 0431b6044bd30a94168e56aaf7a7d0b97e0b1d18
                     </div>
+                    <div style="display:flex; gap:0.75rem; align-items:center;">
+                        <button class="secondary" onclick="clearServiceSelection()" id="btn-clear-filter" style="display:none;">Clear Filter</button>
+                        <button class="secondary" onclick="toggleRecording()" id="btn-recording">Start Recording</button>
+                    </div>
+                </div>
                     <table>
                         <thead>
                             <tr>
@@ -197,6 +207,15 @@
 
                 <!-- Req / Res Fields -->
                 <div id="field-reqres" class="creation-field" style="display:none;">
+                    <label style="font-size:0.75rem; color:var(--text-muted);">HTTP Method</label>
+                    <select id="reqres-method"
+                        style="width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.75rem; border-radius:0.5rem; margin-bottom:1rem;">
+                        <option value="POST">POST</option>
+                        <option value="GET">GET</option>
+                        <option value="PUT">PUT</option>
+                        <option value="DELETE">DELETE</option>
+                    </select>
+
                     <label style="font-size:0.75rem; color:var(--text-muted);">Sample Request Body (Optional JSON
                         Matcher)</label>
                     <input type="file" id="req-file" onchange="handleReqFileUpload(event)"
@@ -364,23 +383,67 @@
 
         // Global store for rules (used by test client)
         let _allRules = [];
+<<<<<<< HEAD
         let _allMqRules = [];
         let _allLogs = [];
+=======
+        let _selectedServiceId = null;
+        let _selectedServiceName = null;
+
+        function formatServiceType(type) {
+            if (!type) return 'Unknown';
+            const value = type.toUpperCase();
+            if (value === 'REST' || value === 'HTTP') return 'REST Webservice';
+            if (value === 'MQ' || value === 'ASYNC') return 'MQ Service';
+            if (value === 'SOAP') return 'SOAP Webservice';
+            return type;
+        }
+
+        function selectService(id, name) {
+            if (_selectedServiceId === id) {
+                _selectedServiceId = null;
+                _selectedServiceName = null;
+            } else {
+                _selectedServiceId = id;
+                _selectedServiceName = name;
+            }
+            refreshData();
+        }
+
+        function clearServiceSelection() {
+            _selectedServiceId = null;
+            _selectedServiceName = null;
+            refreshData();
+        }
+>>>>>>> 0431b6044bd30a94168e56aaf7a7d0b97e0b1d18
 
         async function refreshData() {
             try {
                 const services = await fetchData('/api/admin/services');
                 const rules = await fetchData('/api/admin/rules/http');
+<<<<<<< HEAD
                 const mqRules = await fetchData('/api/admin/rules/mq');
                 const logs = await fetchData('/api/recorder/logs');
+=======
+                const allLogs = await fetchData('/api/recorder/logs');
+                const logs = _selectedServiceId ? await fetchData(`/api/recorder/logs?serviceId=${_selectedServiceId}`) : allLogs;
+>>>>>>> 0431b6044bd30a94168e56aaf7a7d0b97e0b1d18
 
                 _allRules = rules;
                 _allMqRules = mqRules;
                 _allLogs = logs;
 
                 document.getElementById('stat-services').innerText = services.length;
+<<<<<<< HEAD
                 document.getElementById('stat-rules').innerText = rules.length + mqRules.length;
                 document.getElementById('stat-traffic').innerText = logs.length;
+=======
+                document.getElementById('stat-rules').innerText = rules.length;
+                document.getElementById('stat-traffic').innerText = allLogs.length;
+
+                document.getElementById('traffic-filter-label').innerText = _selectedServiceId ? `Showing transactions for ${_selectedServiceName}` : 'Showing all traffic';
+                document.getElementById('btn-clear-filter').style.display = _selectedServiceId ? 'inline-flex' : 'none';
+>>>>>>> 0431b6044bd30a94168e56aaf7a7d0b97e0b1d18
 
                 renderTraffic(logs);
                 renderServices(services);
@@ -392,7 +455,7 @@
                 services.forEach(s => {
                     const opt = document.createElement('option');
                     opt.value = s.id;
-                    opt.textContent = `${s.name} (${s.type})`;
+                    opt.textContent = `${s.name} (${formatServiceType(s.type)})`;
                     select.appendChild(opt);
                 });
                 if (currentVal) select.value = currentVal;
@@ -416,22 +479,29 @@
 
         function renderServices(services) {
             const container = document.getElementById('service-list');
-            container.innerHTML = services.map(s => `
-                <div class="service-card">
+            container.innerHTML = services.map(s => {
+                const activeClass = _selectedServiceId === s.id ? ' active-service' : '';
+                return `
+                <div class="service-card${activeClass}" onclick="selectService(${s.id}, '${s.name.replace(/'/g, "\\'")}')" title="Click to view ${s.name} traffic">
                     <div>
                         <div style="font-weight: 600; display:flex; align-items:center; gap:0.5rem;">
                             ${s.name}
-                            <span style="font-size:0.65rem; padding:1px 4px; background:rgba(255,255,255,0.1); border-radius:4px;">${s.type}</span>
+                            <span style="font-size:0.65rem; padding:1px 4px; background:rgba(255,255,255,0.1); border-radius:4px;">${formatServiceType(s.type)}</span>
                         </div>
                         <div style="font-size: 0.75rem; color: var(--text-muted)">${s.enabled ? 'Active' : 'Disabled'}</div>
                     </div>
                     <div style="display:flex; gap:0.5rem; align-items:center;">
+<<<<<<< HEAD
                         <button class="secondary" style="padding:4px 8px; font-size:0.75rem; border-color:var(--primary); color:var(--primary);" onclick="openRuleModal(${s.id}, '${s.name.replace(/'/g, "\\'")}', '${s.type}')">Rules</button>
                         <button class="secondary" style="padding:4px 8px; font-size:0.75rem; border-color:var(--error); color:var(--error);" onclick="deleteService(${s.id})">Delete</button>
+=======
+                        <button class="secondary" style="padding:4px 8px; font-size:0.75rem; border-color:var(--error); color:var(--error);" onclick="event.stopPropagation(); deleteService(${s.id})">Delete</button>
+>>>>>>> 0431b6044bd30a94168e56aaf7a7d0b97e0b1d18
                         <div class="status-indicator ${s.enabled ? 'status-online' : ''}" style="margin: 0"></div>
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         async function deleteService(id) {
@@ -569,11 +639,12 @@
                 } else if (method === 'reqres') {
                     const reqContent = document.getElementById('req-content').value;
                     const resContent = document.getElementById('res-content').value;
+                    const reqresMethod = document.getElementById('reqres-method').value || 'POST';
                     if (!resContent) return alert("Response Body is required.");
 
                     const rule = {
                         name: "Auto-generated rule",
-                        method: "POST",
+                        method: reqresMethod,
                         pathPattern: ".*",
                         statusCode: 200,
                         responseBody: resContent,
