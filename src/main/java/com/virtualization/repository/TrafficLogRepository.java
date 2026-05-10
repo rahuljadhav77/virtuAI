@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface TrafficLogRepository extends JpaRepository<TrafficLogEntity, Long> {
     List<TrafficLogEntity> findByServiceIdOrderByTimestampDesc(Long serviceId);
+    List<TrafficLogEntity> findTop50ByServiceIdOrderByTimestampDesc(Long serviceId);
 }
