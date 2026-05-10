@@ -6,23 +6,29 @@ import com.virtualization.entity.VirtualServiceEntity;
 import com.virtualization.repository.MqRuleRepository;
 import com.virtualization.repository.VirtualRuleRepository;
 import com.virtualization.repository.VirtualServiceRepository;
+import com.virtualization.service.CachedRuleService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/admin")
 public class AdminController {
     private final VirtualServiceRepository serviceRepository;
     private final VirtualRuleRepository httpRuleRepository;
     private final MqRuleRepository mqRuleRepository;
+    private final CachedRuleService cachedRuleService;
 
-    public AdminController(VirtualServiceRepository serviceRepository, 
+    public AdminController(VirtualServiceRepository serviceRepository,
                            VirtualRuleRepository httpRuleRepository,
-                           MqRuleRepository mqRuleRepository) {
+                           MqRuleRepository mqRuleRepository,
+                           CachedRuleService cachedRuleService) {
         this.serviceRepository = serviceRepository;
         this.httpRuleRepository = httpRuleRepository;
         this.mqRuleRepository = mqRuleRepository;
+        this.cachedRuleService = cachedRuleService;
     }
 
     // --- Service Management ---
@@ -38,7 +44,10 @@ public class AdminController {
 
     @DeleteMapping("/services/{id}")
     public void deleteService(@PathVariable Long id) {
+        httpRuleRepository.deleteByServiceId(id);
         serviceRepository.deleteById(id);
+        cachedRuleService.evictCache();
+        log.info("Deleted service {} and associated rules", id);
     }
 
     // --- HTTP Rule Management ---
@@ -75,6 +84,7 @@ public class AdminController {
     @DeleteMapping("/rules/http/{id}")
     public void deleteHttpRule(@PathVariable Long id) {
         httpRuleRepository.deleteById(id);
+        cachedRuleService.evictCache();
     }
 
     // --- MQ Rule Management ---

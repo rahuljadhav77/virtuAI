@@ -15,6 +15,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -24,19 +28,26 @@ import java.util.regex.Pattern;
 @Service
 public class ImporterService {
     private static final Pattern PATH_PARAM_PATTERN = Pattern.compile("\\{[^}]+\\}");
+    private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
 
     private final VirtualServiceRepository serviceRepository;
     private final VirtualRuleRepository ruleRepository;
+    private final CachedRuleService cachedRuleService;
 
-    public ImporterService(VirtualServiceRepository serviceRepository, VirtualRuleRepository ruleRepository) {
+    public ImporterService(VirtualServiceRepository serviceRepository, VirtualRuleRepository ruleRepository, CachedRuleService cachedRuleService) {
         this.serviceRepository = serviceRepository;
         this.ruleRepository = ruleRepository;
+        this.cachedRuleService = cachedRuleService;
     }
 
     @Transactional
     public VirtualServiceEntity importOpenApi(String spec, String serviceName, String type) {
         if (spec == null || spec.isBlank()) {
             throw new ImportValidationException("OpenAPI spec cannot be null or empty");
+        }
+
+        if (spec.startsWith("http://") || spec.startsWith("https://")) {
+            spec = fetchSpecFromUrl(spec);
         }
 
         log.info("Starting OpenAPI import, serviceName={}", serviceName);
@@ -72,6 +83,7 @@ public class ImporterService {
 
         if (!rules.isEmpty()) {
             ruleRepository.saveAll(rules);
+            cachedRuleService.evictCache();
         }
 
         log.info("OpenAPI import completed: serviceId={}, rulesCreated={}", serviceId, rules.size());
@@ -81,6 +93,10 @@ public class ImporterService {
     public List<VirtualRuleEntity> previewOpenApi(String spec) {
         if (spec == null || spec.isBlank()) {
             throw new ImportValidationException("OpenAPI spec cannot be null or empty");
+        }
+
+        if (spec.startsWith("http://") || spec.startsWith("https://")) {
+            spec = fetchSpecFromUrl(spec);
         }
 
         log.info("Generating OpenAPI preview");
@@ -123,9 +139,33 @@ public class ImporterService {
         Long serviceId = vService.getId();
         rules.forEach(rule -> rule.setServiceId(serviceId));
         ruleRepository.saveAll(rules);
+        cachedRuleService.evictCache();
 
         log.info("JSON rules import completed: serviceId={}, rulesCreated={}", serviceId, rules.size());
         return vService;
+    }
+
+    public String fetchSpecFromUrl(String url) {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("Accept", "application/json")
+                    .timeout(java.time.Duration.ofSeconds(30))
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 200) {
+                log.info("Successfully fetched OpenAPI spec from URL: {}", url);
+                return response.body();
+            } else {
+                throw new OpenApiParseException("Failed to fetch OpenAPI spec from URL. HTTP status: " + response.statusCode());
+            }
+        } catch (Exception e) {
+            log.error("Error fetching OpenAPI spec from URL: {}", url, e);
+            throw new OpenApiParseException("Error fetching OpenAPI spec from URL: " + e.getMessage());
+        }
     }
 
     private VirtualRuleEntity createRule(Long serviceId, String path, String method, Operation operation) {
@@ -155,10 +195,10 @@ public class ImporterService {
 
         rule.setPriority(1);
 
-        if (operation.getRequestBody() != null) {
+        if (operation.getRequestBody() != null && operation.getRequestBody().getContent() != null) {
             rule.setRequestSchema(operation.getRequestBody().getContent().values().stream()
                     .findFirst()
-                    .map(c -> c.getSchema().toString())
+                    .map(c -> c.getSchema() != null ? c.getSchema().toString() : null)
                     .orElse(null));
         }
 

@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface VirtualRuleRepository extends JpaRepository<VirtualRuleEntity, Long> {
     List<VirtualRuleEntity> findByMethodIgnoreCase(String method);
+    List<VirtualRuleEntity> findByServiceId(Long serviceId);
+    void deleteByServiceId(Long serviceId);
 }
