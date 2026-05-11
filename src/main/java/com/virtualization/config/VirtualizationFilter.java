@@ -46,8 +46,8 @@ public class VirtualizationFilter implements Filter {
 
         String path = req.getRequestURI();
 
-        // Skip only system paths that should never be virtualized
-        if (path.startsWith("/actuator/") ||
+        // Skip system paths (API, static files, actuator)
+        if (path.startsWith("/api/") || path.startsWith("/actuator/") ||
             path.equals("/") || path.equals("/index.html") || path.equals("/index.css") ||
             path.startsWith("/h2-console") || path.contains(".")) {
             chain.doFilter(request, response);

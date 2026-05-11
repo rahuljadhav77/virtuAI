@@ -224,8 +224,12 @@
 
             <!-- AI Chat Interface -->
             <div class="card">
-                <div class="card-header">
+                <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
                     <h2 class="card-title">💬 AI Assistant</h2>
+                    <div style="display:flex; gap:0.5rem; align-items:center;">
+                        <span id="ai-session-info" style="font-size:0.7rem; color:var(--text-muted);"></span>
+                        <button onclick="clearAiChat()" style="padding:4px 8px; font-size:0.7rem; background:rgba(255,0,0,0.2); border:1px solid var(--error); color:var(--error);">Clear Chat</button>
+                    </div>
                 </div>
                 <div id="ai-chat-history" style="height:300px; overflow-y:auto; background:rgba(0,0,0,0.2); border:1px solid var(--glass-border); border-radius:0.5rem; padding:1rem; margin-bottom:1rem;">
                     <div style="color:var(--text-muted); font-size:0.85rem;">Ask me anything about your virtualized services...</div>
@@ -1135,6 +1139,12 @@
         // --- AI Studio Functions ---
 
         let _aiDocServiceId = null;
+        let _aiSessionId = generateSessionId();
+        let _aiHistory = [];
+
+        function generateSessionId() {
+            return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
 
         function populateAiServiceSelect() {
             const select = document.getElementById('ai-docs-service-select');
@@ -1243,26 +1253,80 @@
             if (!message) return;
 
             const history = document.getElementById('ai-chat-history');
-            history.innerHTML += `<div style="margin-bottom:0.75rem;"><strong style="color:var(--primary);">You:</strong> ${message}</div>`;
+            const sessionInfo = document.getElementById('ai-session-info');
+
+            // Add user message
+            history.innerHTML += `<div style="margin-bottom:0.75rem; padding:0.5rem; background:rgba(255,255,255,0.05); border-radius:0.5rem;">
+                <strong style="color:var(--primary);">👤 You:</strong> ${escapeHtml(message)}</div>`;
             input.value = '';
 
-            history.innerHTML += `<div style="margin-bottom:0.75rem; color:var(--text-muted);">⏳ Thinking...</div>`;
+            // Add thinking indicator
+            history.innerHTML += `<div id="ai-thinking" style="margin-bottom:0.75rem; color:var(--text-muted); font-style:italic;">🤖 AI: thinking...</div>`;
             history.scrollTop = history.scrollHeight;
 
             try {
-                const resp = await fetch('/api/ai/agent/orchestrate', {
+                const resp = await fetch('/api/ai/chat/message', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-API-KEY': API_KEY },
-                    body: JSON.stringify({ agentType: 'chat', prompt: message, context: {} })
+                    body: JSON.stringify({
+                        sessionId: _aiSessionId,
+                        message: message,
+                        includeContext: true,
+                        historyLimit: 10
+                    })
                 });
                 const data = await resp.json();
-                history.innerHTML = history.innerHTML.replace(/<div style="margin-bottom:0.75rem; color:var(--text-muted);">⏳ Thinking...<\/div>$/, '');
-                history.innerHTML += `<div style="margin-bottom:0.75rem;"><strong style="color:var(--success);">AI:</strong> ${data.result || data.message || JSON.stringify(data)}</div>`;
+
+                // Remove thinking indicator
+                const thinkingEl = document.getElementById('ai-thinking');
+                if (thinkingEl) thinkingEl.remove();
+
+                if (data.error) {
+                    history.innerHTML += `<div style="margin-bottom:0.75rem; color:var(--error);">❌ ${data.error}</div>`;
+                } else {
+                    history.innerHTML += `<div style="margin-bottom:0.75rem; padding:0.5rem; background:rgba(0,255,0,0.05); border-radius:0.5rem;">
+                        <strong style="color:var(--success);">🤖 AI:</strong> ${formatAiResponse(data.response)}</div>`;
+                    sessionInfo.innerText = `Session: ${_aiSessionId.slice(0, 12)}... | Messages: ${data.messageCount}`;
+                }
             } catch (e) {
-                history.innerHTML = history.innerHTML.replace(/<div style="margin-bottom:0.75rem; color:var(--text-muted);">⏳ Thinking...<\/div>$/, '');
+                const thinkingEl = document.getElementById('ai-thinking');
+                if (thinkingEl) thinkingEl.remove();
                 history.innerHTML += `<div style="margin-bottom:0.75rem; color:var(--error);">❌ Error: ${e.message}</div>`;
             }
             history.scrollTop = history.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatAiResponse(text) {
+            // Convert markdown-like formatting
+            return escapeHtml(text)
+                .replace(/\n/g, '<br>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/`(.*?)`/g, '<code style="background:rgba(0,0,0,0.3);padding:2px 4px;border-radius:3px;">$1</code>');
+        }
+
+        async function clearAiChat() {
+            if (!confirm('Clear chat history?')) return;
+
+            try {
+                await fetch(`/api/ai/chat/history/${_aiSessionId}`, {
+                    method: 'DELETE',
+                    headers: { 'X-API-KEY': API_KEY }
+                });
+
+                // Reset session
+                _aiSessionId = generateSessionId();
+                document.getElementById('ai-chat-history').innerHTML =
+                    '<div style="color:var(--text-muted); font-size:0.85rem;">Chat cleared. New session started...</div>';
+                document.getElementById('ai-session-info').innerText = '';
+            } catch (e) {
+                alert('Failed to clear chat: ' + e.message);
+            }
         }
 
         setInterval(refreshData, 3000);
