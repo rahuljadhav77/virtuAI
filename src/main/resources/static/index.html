@@ -32,6 +32,9 @@
             <button id="tab-test" class="tab-btn"
                 style="background:transparent; color:var(--text-muted); border:1px solid var(--glass-border);"
                 onclick="switchTab('test')">Test Client</button>
+            <button id="tab-ai" class="tab-btn"
+                style="background:transparent; color:var(--text-muted); border:1px solid var(--glass-border);"
+                onclick="switchTab('ai')">⭐ AI Studio</button>
         </div>
 
         <div id="pane-live">
@@ -150,6 +153,91 @@
                 </div>
             </div>
         </div> <!-- End pane-test -->
+
+        <!-- AI Studio Pane -->
+        <div id="pane-ai" style="display:none;">
+            <div class="card" style="margin-bottom:1.5rem;">
+                <div class="card-header">
+                    <h2 class="card-title">⭐ AI Studio</h2>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">Intelligent AI-powered tools</span>
+                </div>
+
+                <!-- AI Actions Grid -->
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1rem; margin-top:1rem;">
+
+                    <!-- Self-Healing -->
+                    <div style="background:rgba(0,0,0,0.2); border:1px solid var(--glass-border); border-radius:0.5rem; padding:1.25rem;">
+                        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
+                            <span style="font-size:1.5rem;">🔍</span>
+                            <h3 style="margin:0; font-size:1rem;">Self-Healing Analysis</h3>
+                        </div>
+                        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">Analyze service rules and detect discrepancies for auto-repair</p>
+                        <button onclick="runAiSelfHealing()" style="width:100%;">Run Analysis</button>
+                        <div id="ai-self-healing-result" style="margin-top:1rem; font-size:0.8rem; color:var(--success); display:none;"></div>
+                    </div>
+
+                    <!-- Documentation Generator -->
+                    <div style="background:rgba(0,0,0,0.2); border:1px solid var(--glass-border); border-radius:0.5rem; padding:1.25rem;">
+                        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
+                            <span style="font-size:1.5rem;">📄</span>
+                            <h3 style="margin:0; font-size:1rem;">Documentation Generator</h3>
+                        </div>
+                        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">Auto-generate API documentation from rules</p>
+                        <select id="ai-docs-service-select" onchange="updateDocServiceId()" style="width:100%; margin-bottom:0.5rem; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem;">
+                            <option value="">-- Select Service --</option>
+                        </select>
+                        <button onclick="runAiDocGen()" style="width:100%;">Generate Docs</button>
+                        <div id="ai-docs-result" style="margin-top:1rem; font-size:0.8rem; max-height:200px; overflow-y:auto; display:none; background:rgba(0,0,0,0.3); padding:0.75rem; border-radius:0.25rem;"></div>
+                    </div>
+
+                    <!-- Test Scenario Generator -->
+                    <div style="background:rgba(0,0,0,0.2); border:1px solid var(--glass-border); border-radius:0.5rem; padding:1.25rem;">
+                        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
+                            <span style="font-size:1.5rem;">🧪</span>
+                            <h3 style="margin:0; font-size:1rem;">Test Scenario Generator</h3>
+                        </div>
+                        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">Generate test cases from OpenAPI spec</p>
+                        <textarea id="ai-openapi-spec" placeholder="Paste OpenAPI spec JSON or YAML..." style="width:100%; height:80px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem; font-family:monospace; font-size:0.75rem;"></textarea>
+                        <button onclick="runAiTestScenario()" style="width:100%; margin-top:0.5rem;">Generate Test Scenarios</button>
+                        <div id="ai-test-result" style="margin-top:1rem; font-size:0.8rem; max-height:200px; overflow-y:auto; display:none; background:rgba(0,0,0,0.3); padding:0.75rem; border-radius:0.25rem;"></div>
+                    </div>
+
+                    <!-- Agent Orchestration -->
+                    <div style="background:rgba(0,0,0,0.2); border:1px solid var(--glass-border); border-radius:0.5rem; padding:1.25rem;">
+                        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
+                            <span style="font-size:1.5rem;">🤖</span>
+                            <h3 style="margin:0; font-size:1rem;">Agent Orchestration</h3>
+                        </div>
+                        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">Execute multi-agent AI workflows</p>
+                        <select id="ai-agent-type" style="width:100%; margin-bottom:0.5rem; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.5rem; border-radius:0.25rem;">
+                            <option value="analysis">Service Analysis</option>
+                            <option value="optimization">Rule Optimization</option>
+                            <option value="migration">Schema Migration</option>
+                            <option value="testing">Comprehensive Testing</option>
+                        </select>
+                        <button onclick="runAgentOrchestration()" style="width:100%;">Execute Agent</button>
+                        <div id="ai-agent-result" style="margin-top:1rem; font-size:0.8rem; max-height:200px; overflow-y:auto; display:none; background:rgba(0,0,0,0.3); padding:0.75rem; border-radius:0.25rem;"></div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- AI Chat Interface -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">💬 AI Assistant</h2>
+                </div>
+                <div id="ai-chat-history" style="height:300px; overflow-y:auto; background:rgba(0,0,0,0.2); border:1px solid var(--glass-border); border-radius:0.5rem; padding:1rem; margin-bottom:1rem;">
+                    <div style="color:var(--text-muted); font-size:0.85rem;">Ask me anything about your virtualized services...</div>
+                </div>
+                <div style="display:flex; gap:0.5rem;">
+                    <input type="text" id="ai-chat-input" placeholder="Type your question about services, rules, or AI capabilities..."
+                        style="flex:1; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white; padding:0.75rem; border-radius:0.25rem;"
+                        onkeydown="if(event.key==='Enter') sendAiChat()">
+                    <button onclick="sendAiChat()">Send</button>
+                </div>
+            </div>
+        </div> <!-- End pane-ai -->
     </div>
 
     <!-- Unified Create Service Modal -->
@@ -348,26 +436,25 @@
         function switchTab(tabId) {
             document.getElementById('pane-live').style.display = tabId === 'live' ? 'block' : 'none';
             document.getElementById('pane-test').style.display = tabId === 'test' ? 'block' : 'none';
+            document.getElementById('pane-ai').style.display = tabId === 'ai' ? 'block' : 'none';
 
             const btnLive = document.getElementById('tab-live');
             const btnTest = document.getElementById('tab-test');
+            const btnAi = document.getElementById('tab-ai');
 
-            if (tabId === 'live') {
-                btnLive.style.background = 'var(--primary)';
-                btnLive.style.color = 'white';
-                btnLive.style.border = 'none';
+            const tabs = [
+                { btn: btnLive, active: tabId === 'live' },
+                { btn: btnTest, active: tabId === 'test' },
+                { btn: btnAi, active: tabId === 'ai' }
+            ];
+            tabs.forEach(t => {
+                t.btn.style.background = t.active ? 'var(--primary)' : 'transparent';
+                t.btn.style.color = t.active ? 'white' : 'var(--text-muted)';
+                t.btn.style.border = t.active ? 'none' : '1px solid var(--glass-border)';
+            });
 
-                btnTest.style.background = 'transparent';
-                btnTest.style.color = 'var(--text-muted)';
-                btnTest.style.border = '1px solid var(--glass-border)';
-            } else {
-                btnTest.style.background = 'var(--primary)';
-                btnTest.style.color = 'white';
-                btnTest.style.border = 'none';
-
-                btnLive.style.background = 'transparent';
-                btnLive.style.color = 'var(--text-muted)';
-                btnLive.style.border = '1px solid var(--glass-border)';
+            if (tabId === 'ai') {
+                populateAiServiceSelect();
             }
         }
 
@@ -1043,6 +1130,139 @@
             } catch (e) {
                 alert(e.message);
             }
+        }
+
+        // --- AI Studio Functions ---
+
+        let _aiDocServiceId = null;
+
+        function populateAiServiceSelect() {
+            const select = document.getElementById('ai-docs-service-select');
+            fetchData('/api/admin/services').then(services => {
+                select.innerHTML = '<option value="">-- Select Service --</option>';
+                services.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.id;
+                    opt.textContent = s.name;
+                    select.appendChild(opt);
+                });
+            });
+        }
+
+        function updateDocServiceId() {
+            _aiDocServiceId = document.getElementById('ai-docs-service-select').value;
+        }
+
+        async function runAiSelfHealing() {
+            const resultEl = document.getElementById('ai-self-healing-result');
+            resultEl.style.display = 'block';
+            resultEl.innerHTML = '⏳ Running AI analysis...';
+            resultEl.style.color = 'var(--text-muted)';
+
+            try {
+                const resp = await fetch('/api/ai/self-healing/health/1', {
+                    headers: { 'X-API-KEY': API_KEY }
+                });
+                const data = await resp.json();
+                resultEl.innerHTML = `✅ Analysis Complete\nStatus: ${data.status || 'Healthy'}`;
+                resultEl.style.color = 'var(--success)';
+            } catch (e) {
+                resultEl.innerHTML = `❌ Error: ${e.message}`;
+                resultEl.style.color = 'var(--error)';
+            }
+        }
+
+        async function runAiDocGen() {
+            if (!_aiDocServiceId) {
+                alert('Please select a service first');
+                return;
+            }
+            const resultEl = document.getElementById('ai-docs-result');
+            resultEl.style.display = 'block';
+            resultEl.innerHTML = '⏳ Generating documentation...';
+            resultEl.style.color = 'var(--text-muted)';
+
+            try {
+                const resp = await fetch(`/api/ai/docs/${_aiDocServiceId}`, {
+                    headers: { 'X-API-KEY': API_KEY }
+                });
+                const text = await resp.text();
+                resultEl.innerHTML = `<pre style="white-space:pre-wrap; font-size:0.75rem;">${text}</pre>`;
+            } catch (e) {
+                resultEl.innerHTML = `❌ Error: ${e.message}`;
+            }
+        }
+
+        async function runAiTestScenario() {
+            const spec = document.getElementById('ai-openapi-spec').value;
+            if (!spec) {
+                alert('Please paste an OpenAPI spec first');
+                return;
+            }
+            const resultEl = document.getElementById('ai-test-result');
+            resultEl.style.display = 'block';
+            resultEl.innerHTML = '⏳ Generating test scenarios...';
+            resultEl.style.color = 'var(--text-muted)';
+
+            try {
+                const resp = await fetch('/api/ai/test-scenarios/openapi', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-API-KEY': API_KEY },
+                    body: JSON.stringify({ spec })
+                });
+                const data = await resp.json();
+                resultEl.innerHTML = `<pre style="white-space:pre-wrap; font-size:0.75rem;">${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (e) {
+                resultEl.innerHTML = `❌ Error: ${e.message}`;
+            }
+        }
+
+        async function runAgentOrchestration() {
+            const agentType = document.getElementById('ai-agent-type').value;
+            const resultEl = document.getElementById('ai-agent-result');
+            resultEl.style.display = 'block';
+            resultEl.innerHTML = '⏳ Executing agent workflow...';
+            resultEl.style.color = 'var(--text-muted)';
+
+            try {
+                const resp = await fetch('/api/ai/agent/orchestrate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-API-KEY': API_KEY },
+                    body: JSON.stringify({ agentType, context: {} })
+                });
+                const data = await resp.json();
+                resultEl.innerHTML = `<pre style="white-space:pre-wrap; font-size:0.75rem;">${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (e) {
+                resultEl.innerHTML = `❌ Error: ${e.message}`;
+            }
+        }
+
+        async function sendAiChat() {
+            const input = document.getElementById('ai-chat-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            const history = document.getElementById('ai-chat-history');
+            history.innerHTML += `<div style="margin-bottom:0.75rem;"><strong style="color:var(--primary);">You:</strong> ${message}</div>`;
+            input.value = '';
+
+            history.innerHTML += `<div style="margin-bottom:0.75rem; color:var(--text-muted);">⏳ Thinking...</div>`;
+            history.scrollTop = history.scrollHeight;
+
+            try {
+                const resp = await fetch('/api/ai/agent/orchestrate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-API-KEY': API_KEY },
+                    body: JSON.stringify({ agentType: 'chat', prompt: message, context: {} })
+                });
+                const data = await resp.json();
+                history.innerHTML = history.innerHTML.replace(/<div style="margin-bottom:0.75rem; color:var(--text-muted);">⏳ Thinking...<\/div>$/, '');
+                history.innerHTML += `<div style="margin-bottom:0.75rem;"><strong style="color:var(--success);">AI:</strong> ${data.result || data.message || JSON.stringify(data)}</div>`;
+            } catch (e) {
+                history.innerHTML = history.innerHTML.replace(/<div style="margin-bottom:0.75rem; color:var(--text-muted);">⏳ Thinking...<\/div>$/, '');
+                history.innerHTML += `<div style="margin-bottom:0.75rem; color:var(--error);">❌ Error: ${e.message}</div>`;
+            }
+            history.scrollTop = history.scrollHeight;
         }
 
         setInterval(refreshData, 3000);

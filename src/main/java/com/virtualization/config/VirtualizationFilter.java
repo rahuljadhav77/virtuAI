@@ -46,10 +46,10 @@ public class VirtualizationFilter implements Filter {
 
         String path = req.getRequestURI();
 
-        // Skip system paths
-        if (path.startsWith("/api/") || path.startsWith("/actuator/") || 
+        // Skip only system paths that should never be virtualized
+        if (path.startsWith("/actuator/") ||
             path.equals("/") || path.equals("/index.html") || path.equals("/index.css") ||
-            path.startsWith("/h2-console")) {
+            path.startsWith("/h2-console") || path.contains(".")) {
             chain.doFilter(request, response);
             return;
         }
@@ -57,11 +57,9 @@ public class VirtualizationFilter implements Filter {
         log.info("Intercepting request: {} {}", req.getMethod(), path);
 
         // Normalize Request
-        // Note: Reading body from ServletRequest can only be done once. 
-        // For a real app, we'd use a ContentCachingRequestWrapper.
-        // For this engine, we assume we are the primary consumer of the body.
         String body = "";
-        if ("POST".equalsIgnoreCase(req.getMethod()) || "PUT".equalsIgnoreCase(req.getMethod())) {
+        if ("POST".equalsIgnoreCase(req.getMethod()) || "PUT".equalsIgnoreCase(req.getMethod()) ||
+            "PATCH".equalsIgnoreCase(req.getMethod())) {
             body = req.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
         }
 
@@ -96,7 +94,13 @@ public class VirtualizationFilter implements Filter {
             return;
         }
 
-        // If no rule and no proxy, continue to 404 or other handlers
+        // No matching rule - log as 404
+        VirtualResponse notFoundResponse = VirtualResponse.builder()
+                .statusCode(404)
+                .body("{\"error\":\"No mock rule found for this path\"}")
+                .build();
+        recorderService.logTraffic(virtualRequest, notFoundResponse);
+
         chain.doFilter(request, response);
     }
 
