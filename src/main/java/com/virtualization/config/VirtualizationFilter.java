@@ -75,9 +75,12 @@ public class VirtualizationFilter implements Filter {
             vResponse = proxyService.proxyRequest(virtualRequest);
         }
 
-        if (vResponse != null) {
+        // Only log traffic when there's a matching rule (not 404s)
+        if (vResponse != null && vResponse.getStatusCode() != 404) {
             recorderService.logTraffic(virtualRequest, vResponse);
+        }
 
+        if (vResponse != null) {
             if (vResponse.getDelayMs() > 0) {
                 try {
                     Thread.sleep(vResponse.getDelayMs());
@@ -94,13 +97,7 @@ public class VirtualizationFilter implements Filter {
             return;
         }
 
-        // No matching rule - log as 404
-        VirtualResponse notFoundResponse = VirtualResponse.builder()
-                .statusCode(404)
-                .body("{\"error\":\"No mock rule found for this path\"}")
-                .build();
-        recorderService.logTraffic(virtualRequest, notFoundResponse);
-
+        // No matching rule - just pass through (don't log 404s)
         chain.doFilter(request, response);
     }
 
