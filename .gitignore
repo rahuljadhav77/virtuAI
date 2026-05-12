@@ -3,3 +3,8 @@ target/
 *.txt
 .idea/
 *.iml
+
+# Node.js
+node_modules/
+mcp-server/node_modules/
+mcp-server/build/
