@@ -18,7 +18,7 @@ class VirtuaiMcpServer {
     this.server = new Server(
       {
         name: "virtuai-mcp-server",
-        version: "1.1.0",
+        version: "1.2.0",
       },
       {
         capabilities: {
@@ -29,7 +29,7 @@ class VirtuaiMcpServer {
 
     this.axiosInstance = axios.create({
       baseURL: VIRTUAI_BASE_URL,
-      timeout: 5000,
+      timeout: 10000,
     });
 
     this.setupToolHandlers();
@@ -69,9 +69,7 @@ class VirtuaiMcpServer {
           description: "Delete a service and all its rules",
           inputSchema: {
             type: "object",
-            properties: {
-              id: { type: "number" },
-            },
+            properties: { id: { type: "number" } },
             required: ["id"],
           },
         },
@@ -98,17 +96,12 @@ class VirtuaiMcpServer {
           },
         },
         {
-          name: "list_mq_rules",
-          description: "List all MQ mock rules",
-          inputSchema: { type: "object", properties: {} },
-        },
-        {
           name: "get_traffic_logs",
-          description: "Retrieve recorded traffic logs (HTTP requests/responses)",
+          description: "Retrieve recorded traffic logs",
           inputSchema: {
             type: "object",
             properties: {
-              serviceId: { type: "number", description: "Optional: filter logs by service ID" },
+              serviceId: { type: "number", description: "Optional: filter by service ID" },
             },
           },
         },
@@ -117,9 +110,7 @@ class VirtuaiMcpServer {
           description: "Start recording traffic from a target URL",
           inputSchema: {
             type: "object",
-            properties: {
-              targetUrl: { type: "string", description: "The live backend URL to proxy and record" },
-            },
+            properties: { targetUrl: { type: "string" } },
             required: ["targetUrl"],
           },
         },
@@ -129,18 +120,46 @@ class VirtuaiMcpServer {
           inputSchema: { type: "object", properties: {} },
         },
         {
-          name: "auto_mock_from_logs",
-          description: "Automatically generate mock rules from recorded traffic logs",
-          inputSchema: { type: "object", properties: {} },
+          name: "get_health_report",
+          description: "Get an AI-generated health report for a service",
+          inputSchema: {
+            type: "object",
+            properties: { serviceId: { type: "number" } },
+            required: ["serviceId"],
+          },
+        },
+        {
+          name: "analyze_mismatch",
+          description: "Analyze why a request didn't match any rules",
+          inputSchema: {
+            type: "object",
+            properties: {
+              serviceId: { type: "number" },
+              trafficLogId: { type: "number" },
+            },
+            required: ["serviceId", "trafficLogId"],
+          },
+        },
+        {
+          name: "auto_heal_rule",
+          description: "Suggest and apply fixes to a mock rule based on a failed request",
+          inputSchema: {
+            type: "object",
+            properties: {
+              ruleId: { type: "number" },
+              trafficLogId: { type: "number" },
+            },
+            required: ["ruleId", "trafficLogId"],
+          },
         },
         {
           name: "import_openapi",
-          description: "Import an OpenAPI specification to create a virtual service",
+          description: "Import an OpenAPI specification",
           inputSchema: {
             type: "object",
             properties: {
               name: { type: "string" },
-              spec: { type: "string", description: "The OpenAPI spec content (JSON/YAML)" },
+              spec: { type: "string" },
               type: { type: "string", default: "HTTP" },
             },
             required: ["name", "spec"],
@@ -154,86 +173,63 @@ class VirtuaiMcpServer {
         switch (request.params.name) {
           case "list_services": {
             const response = await this.axiosInstance.get("/api/admin/services");
-            return {
-              content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }],
-            };
+            return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
           }
           case "create_service": {
             const response = await this.axiosInstance.post("/api/admin/services", request.params.arguments);
-            return {
-              content: [{ type: "text", text: `Service created: ${JSON.stringify(response.data)}` }],
-            };
+            return { content: [{ type: "text", text: `Service created: ${JSON.stringify(response.data)}` }] };
           }
           case "delete_service": {
             const { id } = request.params.arguments as { id: number };
             await this.axiosInstance.delete(`/api/admin/services/${id}`);
-            return {
-              content: [{ type: "text", text: `Service ${id} deleted successfully.` }],
-            };
+            return { content: [{ type: "text", text: `Service ${id} deleted.` }] };
           }
           case "list_http_rules": {
             const response = await this.axiosInstance.get("/api/admin/rules/http");
-            return {
-              content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }],
-            };
+            return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
           }
           case "create_http_rule": {
             const response = await this.axiosInstance.post("/api/admin/rules/http", request.params.arguments);
-            return {
-              content: [{ type: "text", text: `HTTP Rule created: ${JSON.stringify(response.data)}` }],
-            };
-          }
-          case "list_mq_rules": {
-            const response = await this.axiosInstance.get("/api/admin/rules/mq");
-            return {
-              content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }],
-            };
+            return { content: [{ type: "text", text: `HTTP Rule created: ${JSON.stringify(response.data)}` }] };
           }
           case "get_traffic_logs": {
             const params = request.params.arguments as { serviceId?: number };
             const response = await this.axiosInstance.get("/api/recorder/logs", { params });
-            return {
-              content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }],
-            };
+            return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
           }
           case "start_recording": {
             const { targetUrl } = request.params.arguments as { targetUrl: string };
             const response = await this.axiosInstance.post(`/api/recorder/start?targetUrl=${encodeURIComponent(targetUrl)}`);
-            return {
-              content: [{ type: "text", text: response.data }],
-            };
+            return { content: [{ type: "text", text: response.data }] };
           }
           case "stop_recording": {
             const response = await this.axiosInstance.post("/api/recorder/stop");
-            return {
-              content: [{ type: "text", text: response.data }],
-            };
+            return { content: [{ type: "text", text: response.data }] };
           }
-          case "auto_mock_from_logs": {
-            const response = await this.axiosInstance.post("/api/recorder/auto-mock");
-            return {
-              content: [{ type: "text", text: response.data }],
-            };
+          case "get_health_report": {
+            const { serviceId } = request.params.arguments as { serviceId: number };
+            const response = await this.axiosInstance.get(`/api/ai/self-healing/health/${serviceId}`);
+            return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
+          }
+          case "analyze_mismatch": {
+            const { serviceId, trafficLogId } = request.params.arguments as { serviceId: number, trafficLogId: number };
+            const response = await this.axiosInstance.get(`/api/ai/self-healing/analyze/${serviceId}/${trafficLogId}`);
+            return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
+          }
+          case "auto_heal_rule": {
+            const { ruleId, trafficLogId } = request.params.arguments as { ruleId: number, trafficLogId: number };
+            const response = await this.axiosInstance.post(`/api/ai/self-healing/auto-heal?ruleId=${ruleId}&trafficLogId=${trafficLogId}`);
+            return { content: [{ type: "text", text: JSON.stringify(response.data, null, 2) }] };
           }
           case "import_openapi": {
             const response = await this.axiosInstance.post("/api/admin/import/openapi", request.params.arguments);
-            return {
-              content: [{ type: "text", text: `Import successful: ${JSON.stringify(response.data)}` }],
-            };
+            return { content: [{ type: "text", text: `Import successful: ${JSON.stringify(response.data)}` }] };
           }
           default:
             throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${request.params.name}`);
         }
       } catch (error: any) {
-        return {
-          isError: true,
-          content: [
-            {
-              type: "text",
-              text: `Error: ${error.response?.data?.message || error.message}`,
-            },
-          ],
-        };
+        return { isError: true, content: [{ type: "text", text: `Error: ${error.response?.data?.message || error.message}` }] };
       }
     });
   }
