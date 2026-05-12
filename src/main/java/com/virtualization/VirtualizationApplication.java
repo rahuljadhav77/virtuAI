@@ -9,7 +9,3 @@ import org.springframework.cache.annotation.EnableCaching;
 @SpringBootApplication(exclude = {RedisAutoConfiguration.class, RedisRepositoriesAutoConfiguration.class})
 @EnableCaching
 public class VirtualizationApplication {
-    public static void main(String[] args) {
-        SpringApplication.run(VirtualizationApplication.class, args);
-    }
-}
