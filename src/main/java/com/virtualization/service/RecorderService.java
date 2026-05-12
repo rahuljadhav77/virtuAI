@@ -24,6 +24,8 @@ public class RecorderService {
     }
 
     public void logTraffic(VirtualRequest request, VirtualResponse response) {
+        if (!recordingEnabled) return; // Only log when recording is enabled
+
         TrafficLogEntity log = new TrafficLogEntity();
         log.setMethod(request.getMethod());
         log.setPath(request.getPath());
