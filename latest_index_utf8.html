@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -8,7 +8,8 @@
     <link rel="stylesheet" href="index.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Oxanium:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code&display=swap"
+        rel="stylesheet">
 </head>
 
 <body>
@@ -24,10 +25,16 @@
             </div>
         </header>
 
-        <div class="tabs">
-            <button id="tab-live" class="tab-btn active" onclick="switchTab('live')">Live Services & Logs</button>
-            <button id="tab-test" class="tab-btn" onclick="switchTab('test')">Test Client</button>
-            <button id="tab-ai" class="tab-btn" onclick="switchTab('ai')">AI Studio</button>
+        <div class="tabs"
+            style="display:flex; gap:1rem; margin-bottom:2rem; border-bottom:1px solid var(--glass-border); padding-bottom:1rem;">
+            <button id="tab-live" class="tab-btn active" style="background:var(--primary); color:white;"
+                onclick="switchTab('live')">Live Services & Logs</button>
+            <button id="tab-test" class="tab-btn"
+                style="background:transparent; color:var(--text-muted); border:1px solid var(--glass-border);"
+                onclick="switchTab('test')">Test Client</button>
+            <button id="tab-ai" class="tab-btn"
+                style="background:transparent; color:var(--text-muted); border:1px solid var(--glass-border);"
+                onclick="switchTab('ai')">AI Studio</button>
         </div>
 
         <div id="pane-live">
@@ -46,7 +53,7 @@
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">System Uptime</div>
-                    <div class="stat-value" id="uptime-counter">99.999%</div>
+                    <div class="stat-value">99.9%</div>
                 </div>
             </div>
 
@@ -142,7 +149,7 @@
             </div>
         </div> <!-- End pane-test -->
 
-        <!-- AI Studio Pane -->
+        <!-- AI Assistant Pane -->
         <div id="pane-ai" style="display:none;">
             <div class="ai-status-bar" id="ai-status">
                 <span class="ai-status-indicator offline"></span>
@@ -151,64 +158,69 @@
 
             <div class="ai-features-grid">
                 <!-- Smart Mock Generator -->
-                <div class="card ai-feature-card">
-                    <div class="card-header">
-                        <span class="ai-icon" style="color:var(--primary)">>_</span>
-                        <h3 class="card-title">Smart Mock Generator</h3>
+                <div class="ai-feature-card">
+                    <div class="ai-feature-header">
+                        <span class="ai-icon">ΓÜí</span>
+                        <h3>Smart Mock Generator</h3>
                     </div>
                     <p class="ai-feature-desc">Describe an API endpoint in natural language and AI will generate the mock rule.</p>
-                    <textarea id="ai-mock-description" placeholder="e.g., Create a GET endpoint for /api/users..." class="ai-textarea"></textarea>
+                    <textarea id="ai-mock-description" placeholder="e.g., Create a GET endpoint for /api/users that returns a list of user profiles with id, name, and email fields"
+                        class="ai-textarea"></textarea>
                     <button class="ai-btn" onclick="generateMock()">Generate Mock</button>
                     <div id="ai-mock-result" class="ai-result"></div>
                 </div>
 
                 <!-- Schema Analysis -->
-                <div class="card ai-feature-card">
-                    <div class="card-header">
-                        <span class="ai-icon" style="color:var(--primary)">[]</span>
-                        <h3 class="card-title">Auto Schema Analysis</h3>
+                <div class="ai-feature-card">
+                    <div class="ai-feature-header">
+                        <span class="ai-icon">≡ƒôï</span>
+                        <h3>Auto Schema Analysis</h3>
                     </div>
-                    <p class="ai-feature-desc">Paste a JSON payload to automatically generate a matching JSON Schema.</p>
-                    <textarea id="ai-schema-payload" placeholder='{"id": 1, "name": "John"}' class="ai-textarea"></textarea>
+                    <p class="ai-feature-desc">Paste a JSON payload to automatically generate a matching JSON Schema for validation.</p>
+                    <textarea id="ai-schema-payload" placeholder='{"id": 1, "name": "John", "email": "john@example.com"}'
+                        class="ai-textarea"></textarea>
                     <button class="ai-btn" onclick="generateSchema()">Generate Schema</button>
                     <pre id="ai-schema-result" class="ai-result-code"></pre>
                 </div>
 
                 <!-- Test Case Creator -->
-                <div class="card ai-feature-card">
-                    <div class="card-header">
-                        <span class="ai-icon" style="color:var(--primary)">::</span>
-                        <h3 class="card-title">Test Case Creator</h3>
+                <div class="ai-feature-card">
+                    <div class="ai-feature-header">
+                        <span class="ai-icon">≡ƒº¬</span>
+                        <h3>Test Case Creator</h3>
                     </div>
-                    <p class="ai-feature-desc">Paste a mock rule JSON to generate test cases with happy path and edge cases.</p>
-                    <textarea id="ai-test-case-input" placeholder='{"name": "Get Users", "method": "GET"}' class="ai-textarea"></textarea>
+                    <p class="ai-feature-desc">Paste a mock rule JSON to generate comprehensive test cases with happy path and edge cases.</p>
+                    <textarea id="ai-test-case-input" placeholder='{"name": "Get Users", "method": "GET", "pathPattern": "/api/users", "responseBody": "[]"}'
+                        class="ai-textarea"></textarea>
                     <button class="ai-btn" onclick="generateTestCases()">Generate Tests</button>
                     <pre id="ai-test-cases-result" class="ai-result-code"></pre>
                 </div>
 
                 <!-- Documentation Generator -->
-                <div class="card ai-feature-card">
-                    <div class="card-header">
-                        <span class="ai-icon" style="color:var(--primary)">##</span>
-                        <h3 class="card-title">Mock Documentation</h3>
+                <div class="ai-feature-card">
+                    <div class="ai-feature-header">
+                        <span class="ai-icon">≡ƒôÜ</span>
+                        <h3>Mock Documentation</h3>
                     </div>
-                    <p class="ai-feature-desc">Generate API documentation from a mock rule.</p>
-                    <textarea id="ai-docs-input" placeholder='{"name": "Get Users", "method": "GET"}' class="ai-textarea"></textarea>
+                    <p class="ai-feature-desc">Generate API documentation from a mock rule ΓÇö endpoints, params, responses, examples.</p>
+                    <textarea id="ai-docs-input" placeholder='{"name": "Get Users", "method": "GET", "pathPattern": "/api/users", "responseBody": "[]"}'
+                        class="ai-textarea"></textarea>
                     <button class="ai-btn" onclick="generateDocumentation()">Generate Docs</button>
                     <div id="ai-docs-result" class="ai-docs-result"></div>
                 </div>
 
                 <!-- Direct AI Chat -->
-                <div class="card ai-feature-card" style="grid-column: 1 / -1;">
-                    <div class="card-header">
-                        <span class="ai-icon" style="color:var(--primary)">$$</span>
-                        <h3 class="card-title">System Assistant</h3>
+                <div class="ai-feature-card full-width">
+                    <div class="ai-feature-header">
+                        <span class="ai-icon">≡ƒÆ¼</span>
+                        <h3>System Assistant</h3>
                     </div>
-                    <p class="ai-feature-desc">Ask questions about virtualization logic, regex patterns, or API design.</p>
+                    <p class="ai-feature-desc">Ask questions about virtualization logic, regex patterns, or API design best practices.</p>
                     <div class="ai-chat-container">
-                        <div id="ai-chat-messages" class="ai-chat-messages" style="height:200px; overflow-y:auto; margin-bottom:1rem; padding:1rem; background:rgba(0,0,0,0.3); border:1px solid var(--glass-border);"></div>
-                        <div class="ai-chat-input-row" style="display:flex; gap:1rem;">
-                            <input type="text" id="ai-chat-input" placeholder="Ask something..." style="flex:1;" onkeypress="if(event.key==='Enter')sendChatMessage()">
+                        <div id="ai-chat-messages" class="ai-chat-messages"></div>
+                        <div class="ai-chat-input-row">
+                            <input type="text" id="ai-chat-input" placeholder="Ask something..."
+                                class="ai-chat-input" onkeypress="if(event.key==='Enter')sendChatMessage()">
                             <button class="ai-btn" onclick="sendChatMessage()">Send</button>
                         </div>
                     </div>
@@ -306,11 +318,23 @@
             const btnTest = document.getElementById('tab-test');
             const btnAi = document.getElementById('tab-ai');
 
-            [btnLive, btnTest, btnAi].forEach(btn => btn.classList.remove('active'));
-            document.getElementById('tab-' + tabId).classList.add('active');
+            // Reset all buttons
+            [btnLive, btnTest, btnAi].forEach(btn => {
+                btn.style.background = 'transparent';
+                btn.style.color = 'var(--text-muted)';
+                btn.style.border = '1px solid var(--glass-border)';
+            });
+
+            // Activate selected
+            const activeBtn = document.getElementById('tab-' + tabId);
+            if (activeBtn) {
+                activeBtn.style.background = 'var(--primary)';
+                activeBtn.style.color = 'white';
+                activeBtn.style.border = 'none';
+            }
 
             if (tabId === 'ai') {
-                if(typeof checkAiStatus === 'function') checkAiStatus();
+                checkAiStatus();
             }
         }
 
@@ -429,7 +453,7 @@
                         <div style="font-weight: 600; display:flex; align-items:center; gap:0.5rem;">
                             ${s.name}
                             <span style="font-size:0.65rem; padding:1px 4px; background:rgba(255,255,255,0.1); border-radius:4px;">${formatServiceType(s.type)}</span>
-                            <span style="font-size:0.65rem; padding:2px 6px; border-radius:4px; font-weight:600; ${s.enabled ? 'background:rgba(16,185,129,0.2); color:var(--success)' : 'background:rgba(239,68,68,0.2); color:var(--error)'}">${s.enabled ? '● Running' : '● Stopped'}</span>
+                            <span style="font-size:0.65rem; padding:2px 6px; border-radius:4px; font-weight:600; ${s.enabled ? 'background:rgba(16,185,129,0.2); color:var(--success)' : 'background:rgba(239,68,68,0.2); color:var(--error)'}">${s.enabled ? 'ΓùÅ Running' : 'ΓùÅ Stopped'}</span>
                         </div>
                         <div style="font-size: 0.75rem; color: var(--text-muted)">${s.enabled ? 'Active' : 'Disabled'}</div>
                     </div>
@@ -700,15 +724,6 @@
         setInterval(refreshData, 3000);
         refreshData();
 
-        // Live Uptime Counter
-        let uptimeVal = 99.991;
-        setInterval(() => {
-            uptimeVal += Math.random() * 0.002;
-            if (uptimeVal > 99.999) uptimeVal = 99.999;
-            const el = document.getElementById('uptime-counter');
-            if (el) el.innerText = uptimeVal.toFixed(3) + '%';
-        }, 2000);
-
         // === AI Functions ===
         async function checkAiStatus() {
             try {
@@ -716,20 +731,22 @@
                 const data = await resp.json();
                 const statusEl = document.getElementById('ai-status');
                 if (data.available) {
-                    statusEl.innerHTML = '<span style="color:var(--success)">[+] AI Service Ready (' + data.message + ')</span>';
+                    statusEl.innerHTML = '<span class="ai-status-indicator online"></span><span class="ai-status-text">AI Service Ready (' + data.message + ')</span>';
                 } else {
-                    statusEl.innerHTML = '<span style="color:var(--error)">[-] ' + data.message + '</span>';
+                    statusEl.innerHTML = '<span class="ai-status-indicator offline"></span><span class="ai-status-text">' + data.message + '</span>';
                 }
             } catch (e) {
-                document.getElementById('ai-status').innerHTML = '<span style="color:var(--error)">[-] AI Service Unavailable</span>';
+                document.getElementById('ai-status').innerHTML = '<span class="ai-status-indicator offline"></span><span class="ai-status-text">AI Service Unavailable</span>';
             }
         }
 
         async function generateMock() {
             const desc = document.getElementById('ai-mock-description').value;
             if (!desc) return alert('Please enter a description');
+
             const resultEl = document.getElementById('ai-mock-result');
-            resultEl.innerHTML = '<span style="color:var(--primary)">Generating mock rule...</span>';
+            resultEl.innerHTML = '<span class="ai-loading">Generating mock rule...</span>';
+
             try {
                 const resp = await fetch('/api/ai/generate-mock', {
                     method: 'POST',
@@ -737,18 +754,23 @@
                     body: JSON.stringify({ description: desc })
                 });
                 const data = await resp.json();
-                if (data.error) resultEl.innerHTML = '<span style="color:var(--error)">' + data.error + '</span>';
-                else resultEl.innerHTML = '<pre style="color:var(--success)">' + data.mock + '</pre>';
+                if (data.error) {
+                    resultEl.innerHTML = '<span class="ai-error">' + data.error + '</span>';
+                } else {
+                    resultEl.innerHTML = '<pre class="ai-code">' + data.mock + '</pre>';
+                }
             } catch (e) {
-                resultEl.innerHTML = '<span style="color:var(--error)">' + e.message + '</span>';
+                resultEl.innerHTML = '<span class="ai-error">' + e.message + '</span>';
             }
         }
 
         async function generateSchema() {
             const payload = document.getElementById('ai-schema-payload').value;
             if (!payload) return alert('Please enter a JSON payload');
+
             const resultEl = document.getElementById('ai-schema-result');
             resultEl.textContent = 'Generating schema...';
+
             try {
                 const resp = await fetch('/api/ai/generate-schema', {
                     method: 'POST',
@@ -756,8 +778,11 @@
                     body: JSON.stringify({ payload: payload })
                 });
                 const data = await resp.json();
-                if (data.error) resultEl.textContent = 'Error: ' + data.error;
-                else resultEl.textContent = data.schema;
+                if (data.error) {
+                    resultEl.textContent = 'Error: ' + data.error;
+                } else {
+                    resultEl.textContent = data.schema;
+                }
             } catch (e) {
                 resultEl.textContent = 'Error: ' + e.message;
             }
@@ -767,12 +792,13 @@
             const input = document.getElementById('ai-chat-input');
             const message = input.value.trim();
             if (!message) return;
+
             const messagesEl = document.getElementById('ai-chat-messages');
-            messagesEl.innerHTML += '<div style="color:var(--text-main); margin-bottom:0.5rem;">> USER: ' + message + '</div>';
+            messagesEl.innerHTML += '<div class="ai-msg-user">You: ' + message + '</div>';
             input.value = '';
-            const loadingId = 'loading-' + Date.now();
-            messagesEl.innerHTML += '<div id="' + loadingId + '" style="color:var(--primary); margin-bottom:0.5rem;">> SYS_AI: Processing...</div>';
-            messagesEl.scrollTop = messagesEl.scrollHeight;
+
+            messagesEl.innerHTML += '<div class="ai-msg-loading">AI: Thinking...</div>';
+
             try {
                 const resp = await fetch('/api/ai/chat', {
                     method: 'POST',
@@ -783,18 +809,22 @@
                     })
                 });
                 const data = await resp.json();
-                document.getElementById(loadingId).remove();
-                if (data.error) messagesEl.innerHTML += '<div style="color:var(--error); margin-bottom:0.5rem;">> SYS_AI: ' + data.error + '</div>';
-                else messagesEl.innerHTML += '<div style="color:var(--success); margin-bottom:0.5rem;">> SYS_AI: ' + data.response + '</div>';
+                // Remove loading message
+                const loading = messagesEl.querySelector('.ai-msg-loading');
+                if (loading) loading.remove();
+
+                if (data.error) {
+                    messagesEl.innerHTML += '<div class="ai-msg-error">AI: ' + data.error + '</div>';
+                } else {
+                    messagesEl.innerHTML += '<div class="ai-msg-ai">AI: ' + data.response + '</div>';
+                }
                 messagesEl.scrollTop = messagesEl.scrollHeight;
             } catch (e) {
-                document.getElementById(loadingId).remove();
-                messagesEl.innerHTML += '<div style="color:var(--error); margin-bottom:0.5rem;">> SYS_AI: Error: ' + e.message + '</div>';
+                const loading = messagesEl.querySelector('.ai-msg-loading');
+                if (loading) loading.remove();
+                messagesEl.innerHTML += '<div class="ai-msg-error">Error: ' + e.message + '</div>';
             }
         }
-
-        function generateTestCases() { alert("Test Case generation is currently mocking behavior."); }
-        function generateDocumentation() { alert("Documentation generation is currently mocking behavior."); }
     </script>
 </body>
 
