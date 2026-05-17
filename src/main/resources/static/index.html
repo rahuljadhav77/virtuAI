@@ -183,6 +183,32 @@
                     <pre id="ai-schema-result" class="ai-result-code"></pre>
                 </div>
 
+                <!-- Test Case Creator -->
+                <div class="ai-feature-card">
+                    <div class="ai-feature-header">
+                        <span class="ai-icon">🧪</span>
+                        <h3>Test Case Creator</h3>
+                    </div>
+                    <p class="ai-feature-desc">Paste a mock rule JSON to generate comprehensive test cases with happy path and edge cases.</p>
+                    <textarea id="ai-test-case-input" placeholder='{"name": "Get Users", "method": "GET", "pathPattern": "/api/users", "responseBody": "[]"}'
+                        class="ai-textarea"></textarea>
+                    <button class="ai-btn" onclick="generateTestCases()">Generate Tests</button>
+                    <pre id="ai-test-cases-result" class="ai-result-code"></pre>
+                </div>
+
+                <!-- Documentation Generator -->
+                <div class="ai-feature-card">
+                    <div class="ai-feature-header">
+                        <span class="ai-icon">📚</span>
+                        <h3>Mock Documentation</h3>
+                    </div>
+                    <p class="ai-feature-desc">Generate API documentation from a mock rule — endpoints, params, responses, examples.</p>
+                    <textarea id="ai-docs-input" placeholder='{"name": "Get Users", "method": "GET", "pathPattern": "/api/users", "responseBody": "[]"}'
+                        class="ai-textarea"></textarea>
+                    <button class="ai-btn" onclick="generateDocumentation()">Generate Docs</button>
+                    <div id="ai-docs-result" class="ai-docs-result"></div>
+                </div>
+
                 <!-- Direct AI Chat -->
                 <div class="ai-feature-card full-width">
                     <div class="ai-feature-header">
