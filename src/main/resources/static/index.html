@@ -32,9 +32,6 @@
             <button id="tab-test" class="tab-btn"
                 style="background:transparent; color:var(--text-muted); border:1px solid var(--glass-border);"
                 onclick="switchTab('test')">Test Client</button>
-            <button id="tab-ai" class="tab-btn"
-                style="background:transparent; color:var(--text-muted); border:1px solid var(--glass-border);"
-                onclick="switchTab('ai')">AI Studio</button>
         </div>
 
         <div id="pane-live">
@@ -148,85 +145,6 @@
                 </div>
             </div>
         </div> <!-- End pane-test -->
-
-        <!-- AI Assistant Pane -->
-        <div id="pane-ai" style="display:none;">
-            <div class="ai-status-bar" id="ai-status">
-                <span class="ai-status-indicator offline"></span>
-                <span class="ai-status-text">Checking AI service...</span>
-            </div>
-
-            <div class="ai-features-grid">
-                <!-- Smart Mock Generator -->
-                <div class="ai-feature-card">
-                    <div class="ai-feature-header">
-                        <span class="ai-icon">⚡</span>
-                        <h3>Smart Mock Generator</h3>
-                    </div>
-                    <p class="ai-feature-desc">Describe an API endpoint in natural language and AI will generate the mock rule.</p>
-                    <textarea id="ai-mock-description" placeholder="e.g., Create a GET endpoint for /api/users that returns a list of user profiles with id, name, and email fields"
-                        class="ai-textarea"></textarea>
-                    <button class="ai-btn" onclick="generateMock()">Generate Mock</button>
-                    <div id="ai-mock-result" class="ai-result"></div>
-                </div>
-
-                <!-- Schema Analysis -->
-                <div class="ai-feature-card">
-                    <div class="ai-feature-header">
-                        <span class="ai-icon">📋</span>
-                        <h3>Auto Schema Analysis</h3>
-                    </div>
-                    <p class="ai-feature-desc">Paste a JSON payload to automatically generate a matching JSON Schema for validation.</p>
-                    <textarea id="ai-schema-payload" placeholder='{"id": 1, "name": "John", "email": "john@example.com"}'
-                        class="ai-textarea"></textarea>
-                    <button class="ai-btn" onclick="generateSchema()">Generate Schema</button>
-                    <pre id="ai-schema-result" class="ai-result-code"></pre>
-                </div>
-
-                <!-- Test Case Creator -->
-                <div class="ai-feature-card">
-                    <div class="ai-feature-header">
-                        <span class="ai-icon">🧪</span>
-                        <h3>Test Case Creator</h3>
-                    </div>
-                    <p class="ai-feature-desc">Paste a mock rule JSON to generate comprehensive test cases with happy path and edge cases.</p>
-                    <textarea id="ai-test-case-input" placeholder='{"name": "Get Users", "method": "GET", "pathPattern": "/api/users", "responseBody": "[]"}'
-                        class="ai-textarea"></textarea>
-                    <button class="ai-btn" onclick="generateTestCases()">Generate Tests</button>
-                    <pre id="ai-test-cases-result" class="ai-result-code"></pre>
-                </div>
-
-                <!-- Documentation Generator -->
-                <div class="ai-feature-card">
-                    <div class="ai-feature-header">
-                        <span class="ai-icon">📚</span>
-                        <h3>Mock Documentation</h3>
-                    </div>
-                    <p class="ai-feature-desc">Generate API documentation from a mock rule — endpoints, params, responses, examples.</p>
-                    <textarea id="ai-docs-input" placeholder='{"name": "Get Users", "method": "GET", "pathPattern": "/api/users", "responseBody": "[]"}'
-                        class="ai-textarea"></textarea>
-                    <button class="ai-btn" onclick="generateDocumentation()">Generate Docs</button>
-                    <div id="ai-docs-result" class="ai-docs-result"></div>
-                </div>
-
-                <!-- Direct AI Chat -->
-                <div class="ai-feature-card full-width">
-                    <div class="ai-feature-header">
-                        <span class="ai-icon">💬</span>
-                        <h3>System Assistant</h3>
-                    </div>
-                    <p class="ai-feature-desc">Ask questions about virtualization logic, regex patterns, or API design best practices.</p>
-                    <div class="ai-chat-container">
-                        <div id="ai-chat-messages" class="ai-chat-messages"></div>
-                        <div class="ai-chat-input-row">
-                            <input type="text" id="ai-chat-input" placeholder="Ask something..."
-                                class="ai-chat-input" onkeypress="if(event.key==='Enter')sendChatMessage()">
-                            <button class="ai-btn" onclick="sendChatMessage()">Send</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div> <!-- End pane-ai -->
     </div>
 
     <!-- Unified Create Service Modal -->
@@ -312,29 +230,26 @@
         function switchTab(tabId) {
             document.getElementById('pane-live').style.display = tabId === 'live' ? 'block' : 'none';
             document.getElementById('pane-test').style.display = tabId === 'test' ? 'block' : 'none';
-            document.getElementById('pane-ai').style.display = tabId === 'ai' ? 'block' : 'none';
 
             const btnLive = document.getElementById('tab-live');
             const btnTest = document.getElementById('tab-test');
-            const btnAi = document.getElementById('tab-ai');
 
-            // Reset all buttons
-            [btnLive, btnTest, btnAi].forEach(btn => {
-                btn.style.background = 'transparent';
-                btn.style.color = 'var(--text-muted)';
-                btn.style.border = '1px solid var(--glass-border)';
-            });
+            if (tabId === 'live') {
+                btnLive.style.background = 'var(--primary)';
+                btnLive.style.color = 'white';
+                btnLive.style.border = 'none';
 
-            // Activate selected
-            const activeBtn = document.getElementById('tab-' + tabId);
-            if (activeBtn) {
-                activeBtn.style.background = 'var(--primary)';
-                activeBtn.style.color = 'white';
-                activeBtn.style.border = 'none';
-            }
+                btnTest.style.background = 'transparent';
+                btnTest.style.color = 'var(--text-muted)';
+                btnTest.style.border = '1px solid var(--glass-border)';
+            } else {
+                btnTest.style.background = 'var(--primary)';
+                btnTest.style.color = 'white';
+                btnTest.style.border = 'none';
 
-            if (tabId === 'ai') {
-                checkAiStatus();
+                btnLive.style.background = 'transparent';
+                btnLive.style.color = 'var(--text-muted)';
+                btnLive.style.border = '1px solid var(--glass-border)';
             }
         }
 
@@ -723,108 +638,6 @@
 
         setInterval(refreshData, 3000);
         refreshData();
-
-        // === AI Functions ===
-        async function checkAiStatus() {
-            try {
-                const resp = await fetch('/api/ai/status');
-                const data = await resp.json();
-                const statusEl = document.getElementById('ai-status');
-                if (data.available) {
-                    statusEl.innerHTML = '<span class="ai-status-indicator online"></span><span class="ai-status-text">AI Service Ready (' + data.message + ')</span>';
-                } else {
-                    statusEl.innerHTML = '<span class="ai-status-indicator offline"></span><span class="ai-status-text">' + data.message + '</span>';
-                }
-            } catch (e) {
-                document.getElementById('ai-status').innerHTML = '<span class="ai-status-indicator offline"></span><span class="ai-status-text">AI Service Unavailable</span>';
-            }
-        }
-
-        async function generateMock() {
-            const desc = document.getElementById('ai-mock-description').value;
-            if (!desc) return alert('Please enter a description');
-
-            const resultEl = document.getElementById('ai-mock-result');
-            resultEl.innerHTML = '<span class="ai-loading">Generating mock rule...</span>';
-
-            try {
-                const resp = await fetch('/api/ai/generate-mock', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ description: desc })
-                });
-                const data = await resp.json();
-                if (data.error) {
-                    resultEl.innerHTML = '<span class="ai-error">' + data.error + '</span>';
-                } else {
-                    resultEl.innerHTML = '<pre class="ai-code">' + data.mock + '</pre>';
-                }
-            } catch (e) {
-                resultEl.innerHTML = '<span class="ai-error">' + e.message + '</span>';
-            }
-        }
-
-        async function generateSchema() {
-            const payload = document.getElementById('ai-schema-payload').value;
-            if (!payload) return alert('Please enter a JSON payload');
-
-            const resultEl = document.getElementById('ai-schema-result');
-            resultEl.textContent = 'Generating schema...';
-
-            try {
-                const resp = await fetch('/api/ai/generate-schema', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ payload: payload })
-                });
-                const data = await resp.json();
-                if (data.error) {
-                    resultEl.textContent = 'Error: ' + data.error;
-                } else {
-                    resultEl.textContent = data.schema;
-                }
-            } catch (e) {
-                resultEl.textContent = 'Error: ' + e.message;
-            }
-        }
-
-        async function sendChatMessage() {
-            const input = document.getElementById('ai-chat-input');
-            const message = input.value.trim();
-            if (!message) return;
-
-            const messagesEl = document.getElementById('ai-chat-messages');
-            messagesEl.innerHTML += '<div class="ai-msg-user">You: ' + message + '</div>';
-            input.value = '';
-
-            messagesEl.innerHTML += '<div class="ai-msg-loading">AI: Thinking...</div>';
-
-            try {
-                const resp = await fetch('/api/ai/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        systemPrompt: 'You are a helpful API virtualization assistant. Help with regex patterns, mock rules, and API design.',
-                        message: message
-                    })
-                });
-                const data = await resp.json();
-                // Remove loading message
-                const loading = messagesEl.querySelector('.ai-msg-loading');
-                if (loading) loading.remove();
-
-                if (data.error) {
-                    messagesEl.innerHTML += '<div class="ai-msg-error">AI: ' + data.error + '</div>';
-                } else {
-                    messagesEl.innerHTML += '<div class="ai-msg-ai">AI: ' + data.response + '</div>';
-                }
-                messagesEl.scrollTop = messagesEl.scrollHeight;
-            } catch (e) {
-                const loading = messagesEl.querySelector('.ai-msg-loading');
-                if (loading) loading.remove();
-                messagesEl.innerHTML += '<div class="ai-msg-error">Error: ' + e.message + '</div>';
-            }
-        }
     </script>
 </body>
 
