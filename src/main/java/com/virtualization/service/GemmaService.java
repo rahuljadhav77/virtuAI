@@ -32,42 +32,42 @@ public class GemmaService {
         if (!aiConfig.isEnabled()) {
             return false;
         }
-        try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(aiConfig.getBaseUrl() + "/api/tags"))
-                    .timeout(Duration.ofSeconds(10))
-                    .GET()
-                    .build();
-
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            return response.statusCode() == 200;
-        } catch (Exception e) {
-            log.warn("AI service not available: {}", e.getMessage());
+        if (aiConfig.getApiKey() == null || aiConfig.getApiKey().isBlank()) {
+            log.warn("AI service not available: API key is missing");
             return false;
         }
+        return true;
     }
 
     public String chat(String systemPrompt, String userMessage) {
         if (!isAvailable()) {
-            throw new RuntimeException("AI service is not available. Please ensure Ollama is running at " + aiConfig.getBaseUrl());
+            throw new RuntimeException("AI service is not available. Please provide a Google Gemini API Key.");
         }
 
         try {
             Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("model", aiConfig.getModel());
-            requestBody.put("stream", false);
-
-            List<Map<String, String>> messages = new ArrayList<>();
+            
             if (systemPrompt != null && !systemPrompt.isBlank()) {
-                messages.add(Map.of("role", "system", "content", systemPrompt));
+                requestBody.put("system_instruction", Map.of(
+                    "parts", List.of(Map.of("text", systemPrompt))
+                ));
             }
-            messages.add(Map.of("role", "user", "content", userMessage));
-            requestBody.put("messages", messages);
+            
+            requestBody.put("contents", List.of(
+                Map.of("parts", List.of(Map.of("text", userMessage)))
+            ));
 
             String jsonBody = objectMapper.writeValueAsString(requestBody);
+            
+            String model = aiConfig.getModel();
+            if (model == null || model.isBlank() || model.contains("gemma") || model.equals("gemma:2b")) {
+                model = "gemini-2.5-flash"; // Fallback to Gemini 2.5 Flash
+            }
+
+            String url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + aiConfig.getApiKey();
 
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(aiConfig.getBaseUrl() + "/api/chat"))
+                    .uri(URI.create(url))
                     .timeout(Duration.ofSeconds(120))
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
@@ -80,7 +80,15 @@ public class GemmaService {
             }
 
             JsonNode jsonResponse = objectMapper.readTree(response.body());
-            return jsonResponse.get("message").get("content").asText();
+            
+            if (jsonResponse.has("candidates") && jsonResponse.get("candidates").size() > 0) {
+                JsonNode firstCandidate = jsonResponse.get("candidates").get(0);
+                if (firstCandidate.has("content") && firstCandidate.get("content").has("parts")) {
+                     return firstCandidate.get("content").get("parts").get(0).get("text").asText();
+                }
+            }
+            
+            throw new RuntimeException("Unexpected response format from Gemini API");
 
         } catch (Exception e) {
             log.error("Error communicating with AI service", e);
