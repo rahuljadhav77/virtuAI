@@ -209,60 +209,82 @@ public class GemmaService {
                 """;
         }
 
-        // Live RAG Context retrieval
-        long serviceCount = 0;
-        long ruleCount = 0;
-        long logCount = 0;
-        StringBuilder servicesSummary = new StringBuilder();
+        // Check if the user query requests system status or RAG context details
+        boolean wantsRag = msg.contains("status") || msg.contains("report") || msg.contains("inventory") || 
+                           msg.contains("active") || msg.contains("rule") || msg.contains("traffic") || 
+                           msg.contains("log") || msg.contains("service") || msg.contains("rag") || 
+                           msg.contains("stat");
 
-        try {
-            serviceCount = virtualServiceRepository.count();
-            ruleCount = virtualRuleRepository.count();
-            logCount = trafficLogRepository.count();
+        String ragSummary = "";
+        if (wantsRag) {
+            long serviceCount = 0;
+            long ruleCount = 0;
+            long logCount = 0;
+            StringBuilder servicesSummary = new StringBuilder();
 
-            List<VirtualServiceEntity> servicesList = virtualServiceRepository.findAll();
-            if (servicesList.isEmpty()) {
-                servicesSummary.append("<div style='font-style:italic; color:var(--text-muted); margin-left:0.5rem;'>No virtual services configured.</div>");
-            } else {
-                for (VirtualServiceEntity s : servicesList) {
-                    String statusColor = s.isEnabled() ? "var(--success)" : "var(--error)";
-                    String statusText = s.isEnabled() ? "● Running" : "○ Stopped";
-                    servicesSummary.append(String.format(
-                        "<div style='margin-bottom:0.25rem; display:flex; justify-content:between; align-items:center;'>" +
-                        "  <span><b>%s</b> (%s)</span>" +
-                        "  <span style='font-size:0.7rem; font-weight:600; color:%s;'>%s</span>" +
-                        "</div>",
-                        s.getName(), s.getType(), statusColor, statusText
-                    ));
+            try {
+                serviceCount = virtualServiceRepository.count();
+                ruleCount = virtualRuleRepository.count();
+                logCount = trafficLogRepository.count();
+
+                List<VirtualServiceEntity> servicesList = virtualServiceRepository.findAll();
+                if (servicesList.isEmpty()) {
+                    servicesSummary.append("<div style='font-style:italic; color:var(--text-muted); margin-left:0.5rem;'>No virtual services configured.</div>");
+                } else {
+                    for (VirtualServiceEntity s : servicesList) {
+                        String statusColor = s.isEnabled() ? "var(--success)" : "var(--error)";
+                        String statusText = s.isEnabled() ? "● Running" : "○ Stopped";
+                        servicesSummary.append(String.format(
+                            "<div style='margin-bottom:0.25rem; display:flex; justify-content:between; align-items:center;'>" +
+                            "  <span><b>%s</b> (%s)</span>" +
+                            "  <span style='font-size:0.7rem; font-weight:600; color:%s;'>%s</span>" +
+                            "</div>",
+                            s.getName(), s.getType(), statusColor, statusText
+                        ));
+                    }
                 }
+            } catch (Exception e) {
+                log.error("Failed to compile RAG context details", e);
+                servicesSummary.append("<div style='color:var(--error);'>Error fetching RAG context details.</div>");
             }
-        } catch (Exception e) {
-            log.error("Failed to compile RAG context details", e);
-            servicesSummary.append("<div style='color:var(--error);'>Error fetching RAG context details.</div>");
-        }
 
-        String ragSummary = String.format("""
-            <div class="rag-context" style="margin-top: 1rem; padding: 0.75rem; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 0.5rem; font-size: 0.8rem; line-height: 1.4;">
-              <div style="font-weight: 600; color: var(--primary); margin-bottom: 0.5rem; display:flex; align-items:center; gap:0.25rem;">
-                <span style="font-size:0.9rem;">👁</span> Live RAG Context (System Status)
-              </div>
-              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem; margin-bottom:0.75rem; background:rgba(0,0,0,0.15); padding:0.5rem; border-radius:0.25rem;">
-                <div>Services: <b>%d</b></div>
-                <div>Mock Rules: <b>%d</b></div>
-                <div style="grid-column: 1/-1;">Transactions Logged: <b>%d</b></div>
-              </div>
-              <div style="margin-top: 0.5rem; font-weight: 600; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); margin-bottom:0.25rem;">Service Inventory:</div>
-              %s
-            </div>
-            """, serviceCount, ruleCount, logCount, servicesSummary.toString());
+            ragSummary = String.format("""
+                <div class="rag-context" style="margin-top: 1rem; padding: 0.75rem; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 0.5rem; font-size: 0.8rem; line-height: 1.4;">
+                  <div style="font-weight: 600; color: var(--primary); margin-bottom: 0.5rem; display:flex; align-items:center; gap:0.25rem;">
+                    <span style="font-size:0.9rem;">👁</span> Live RAG Context (System Status)
+                  </div>
+                  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem; margin-bottom:0.75rem; background:rgba(0,0,0,0.15); padding:0.5rem; border-radius:0.25rem;">
+                    <div>Services: <b>%d</b></div>
+                    <div>Mock Rules: <b>%d</b></div>
+                    <div style="grid-column: 1/-1;">Transactions Logged: <b>%d</b></div>
+                  </div>
+                  <div style="margin-top: 0.5rem; font-weight: 600; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); margin-bottom:0.25rem;">Service Inventory:</div>
+                  %s
+                </div>
+                """, serviceCount, ruleCount, logCount, servicesSummary.toString());
+        }
 
         // Chat conversation handler using the dynamic RAG context
         if (msg.contains("hi") || msg.contains("hello") || msg.contains("hey")) {
-            return "Hello! I am your Virtu-AI System Assistant. Here is your current system status, retrieved live from the database via RAG:\n" + ragSummary;
+            String greeting = "Hello! I am your Virtu-AI System Assistant. How can I help you design, record, or mock your virtual APIs today?";
+            if (wantsRag) {
+                return greeting + "\n" + ragSummary;
+            } else {
+                return greeting + " <i>(To see a live system status and service inventory, ask me for a 'status report'!)</i>";
+            }
         } else if (msg.contains("help") || msg.contains("create") || msg.contains("service") || msg.contains("mock")) {
-            return "To create a virtual service: Click the '+ Create Service' button at the top right, enter a name, choose the protocol (REST, SOAP, MQ), and pick a creation method. You can start with an Empty Service and add rules manually, upload/paste an OpenAPI spec, bulk-import rules from a JSON array, or generate a mock automatically from a sample Request/Response pair.\n\nHere is your current live system status:\n" + ragSummary;
+            String helperText = "To create a virtual service: Click the '+ Create Service' button at the top right, enter a name, choose the protocol (REST, SOAP, MQ), and pick a creation method. You can start with an Empty Service and add rules manually, upload/paste an OpenAPI spec, bulk-import rules from a JSON array, or generate a mock automatically from a sample Request/Response pair. Let me know if you need any help writing mock rules!";
+            if (wantsRag) {
+                return helperText + "\n\nHere is your current live system status:\n" + ragSummary;
+            } else {
+                return helperText + " <i>(To see your live service inventory directly in this chat, ask me for a 'status report'!)</i>";
+            }
         }
 
-        return "I am here to assist you with the API Virtualization Platform. You can ask me how to create services, configure mock rules, structure JSON paths, or troubleshoot API routes.\n\nHere is your current system summary:\n" + ragSummary;
+        if (wantsRag) {
+            return "Here is your requested system status report:\n" + ragSummary;
+        }
+
+        return "I am here to assist you with the API Virtualization Platform. You can ask me how to create services, configure mock rules, structure JSON paths, troubleshoot API routes, or ask for a 'system status report'.";
     }
 }
