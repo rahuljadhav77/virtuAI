@@ -3,6 +3,10 @@ package com.virtualization.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.virtualization.config.AiConfig;
+import com.virtualization.repository.VirtualServiceRepository;
+import com.virtualization.repository.VirtualRuleRepository;
+import com.virtualization.repository.TrafficLogRepository;
+import com.virtualization.entity.VirtualServiceEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -19,9 +23,18 @@ public class GemmaService {
     private final AiConfig aiConfig;
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
+    private final VirtualServiceRepository virtualServiceRepository;
+    private final VirtualRuleRepository virtualRuleRepository;
+    private final TrafficLogRepository trafficLogRepository;
 
-    public GemmaService(AiConfig aiConfig) {
+    public GemmaService(AiConfig aiConfig,
+                        VirtualServiceRepository virtualServiceRepository,
+                        VirtualRuleRepository virtualRuleRepository,
+                        TrafficLogRepository trafficLogRepository) {
         this.aiConfig = aiConfig;
+        this.virtualServiceRepository = virtualServiceRepository;
+        this.virtualRuleRepository = virtualRuleRepository;
+        this.trafficLogRepository = trafficLogRepository;
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(30))
                 .build();
@@ -144,6 +157,8 @@ public class GemmaService {
     }
 
     private String getLocalFallbackResponse(String userMessage) {
+        String msg = userMessage.trim().toLowerCase();
+
         if (userMessage.startsWith("Create a mock for:")) {
             String description = userMessage.substring("Create a mock for:".length()).trim();
             String method = "GET";
@@ -193,6 +208,61 @@ public class GemmaService {
                 }
                 """;
         }
-        return "{}";
+
+        // Live RAG Context retrieval
+        long serviceCount = 0;
+        long ruleCount = 0;
+        long logCount = 0;
+        StringBuilder servicesSummary = new StringBuilder();
+
+        try {
+            serviceCount = virtualServiceRepository.count();
+            ruleCount = virtualRuleRepository.count();
+            logCount = trafficLogRepository.count();
+
+            List<VirtualServiceEntity> servicesList = virtualServiceRepository.findAll();
+            if (servicesList.isEmpty()) {
+                servicesSummary.append("<div style='font-style:italic; color:var(--text-muted); margin-left:0.5rem;'>No virtual services configured.</div>");
+            } else {
+                for (VirtualServiceEntity s : servicesList) {
+                    String statusColor = s.isEnabled() ? "var(--success)" : "var(--error)";
+                    String statusText = s.isEnabled() ? "● Running" : "○ Stopped";
+                    servicesSummary.append(String.format(
+                        "<div style='margin-bottom:0.25rem; display:flex; justify-content:between; align-items:center;'>" +
+                        "  <span><b>%s</b> (%s)</span>" +
+                        "  <span style='font-size:0.7rem; font-weight:600; color:%s;'>%s</span>" +
+                        "</div>",
+                        s.getName(), s.getType(), statusColor, statusText
+                    ));
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to compile RAG context details", e);
+            servicesSummary.append("<div style='color:var(--error);'>Error fetching RAG context details.</div>");
+        }
+
+        String ragSummary = String.format("""
+            <div class="rag-context" style="margin-top: 1rem; padding: 0.75rem; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 0.5rem; font-size: 0.8rem; line-height: 1.4;">
+              <div style="font-weight: 600; color: var(--primary); margin-bottom: 0.5rem; display:flex; align-items:center; gap:0.25rem;">
+                <span style="font-size:0.9rem;">👁</span> Live RAG Context (System Status)
+              </div>
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem; margin-bottom:0.75rem; background:rgba(0,0,0,0.15); padding:0.5rem; border-radius:0.25rem;">
+                <div>Services: <b>%d</b></div>
+                <div>Mock Rules: <b>%d</b></div>
+                <div style="grid-column: 1/-1;">Transactions Logged: <b>%d</b></div>
+              </div>
+              <div style="margin-top: 0.5rem; font-weight: 600; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); margin-bottom:0.25rem;">Service Inventory:</div>
+              %s
+            </div>
+            """, serviceCount, ruleCount, logCount, servicesSummary.toString());
+
+        // Chat conversation handler using the dynamic RAG context
+        if (msg.contains("hi") || msg.contains("hello") || msg.contains("hey")) {
+            return "Hello! I am your Virtu-AI System Assistant. Here is your current system status, retrieved live from the database via RAG:\n" + ragSummary;
+        } else if (msg.contains("help") || msg.contains("create") || msg.contains("service") || msg.contains("mock")) {
+            return "To create a virtual service: Click the '+ Create Service' button at the top right, enter a name, choose the protocol (REST, SOAP, MQ), and pick a creation method. You can start with an Empty Service and add rules manually, upload/paste an OpenAPI spec, bulk-import rules from a JSON array, or generate a mock automatically from a sample Request/Response pair.\n\nHere is your current live system status:\n" + ragSummary;
+        }
+
+        return "I am here to assist you with the API Virtualization Platform. You can ask me how to create services, configure mock rules, structure JSON paths, or troubleshoot API routes.\n\nHere is your current system summary:\n" + ragSummary;
     }
 }
