@@ -76,7 +76,8 @@ public class GemmaService {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() != 200) {
-                throw new RuntimeException("AI request failed: " + response.statusCode() + " - " + response.body());
+                log.warn("Gemini API request failed with status code {}: {}. Falling back to local generator.", response.statusCode(), response.body());
+                return getLocalFallbackResponse(userMessage);
             }
 
             JsonNode jsonResponse = objectMapper.readTree(response.body());
@@ -91,8 +92,8 @@ public class GemmaService {
             throw new RuntimeException("Unexpected response format from Gemini API");
 
         } catch (Exception e) {
-            log.error("Error communicating with AI service", e);
-            throw new RuntimeException("AI communication error: " + e.getMessage());
+            log.warn("Error communicating with AI service (falling back to local generator): {}", e.getMessage());
+            return getLocalFallbackResponse(userMessage);
         }
     }
 
@@ -140,5 +141,58 @@ public class GemmaService {
 
         String userMessage = "Request: " + requestBody + "\nResponse: " + responseBody;
         return chat(systemPrompt, userMessage);
+    }
+
+    private String getLocalFallbackResponse(String userMessage) {
+        if (userMessage.startsWith("Create a mock for:")) {
+            String description = userMessage.substring("Create a mock for:".length()).trim();
+            String method = "GET";
+            if (description.toLowerCase().contains("post")) method = "POST";
+            else if (description.toLowerCase().contains("put")) method = "PUT";
+            else if (description.toLowerCase().contains("delete")) method = "DELETE";
+
+            String path = "/api/mock-service";
+            if (description.contains("/")) {
+                int slashIdx = description.indexOf("/");
+                int spaceIdx = description.indexOf(" ", slashIdx);
+                if (spaceIdx > slashIdx) {
+                    path = description.substring(slashIdx, spaceIdx);
+                } else {
+                    path = description.substring(slashIdx);
+                }
+            }
+            
+            return String.format("""
+                {
+                  "name": "Local Mock for %s",
+                  "method": "%s",
+                  "pathPattern": "%s",
+                  "responseBody": "{\\n  \\\"status\\\": \\\"success\\\",\\n  \\\"message\\\": \\\"Mock response generated locally for: %s\\\"\\n}",
+                  "statusCode": 200,
+                  "priority": 1
+                }
+                """, description.replace("\"", "\\\""), method, path, description.replace("\"", "\\\""));
+        } else if (userMessage.startsWith("Generate schema for:")) {
+            return """
+                {
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string" },
+                    "message": { "type": "string" }
+                  }
+                }
+                """;
+        } else if (userMessage.startsWith("Request:")) {
+            return """
+                {
+                  "name": "Suggested Traffic Pattern",
+                  "pathPattern": "/api/v1/.*",
+                  "jsonPathCondition": "$.status",
+                  "suggestions": "Consider verifying response status codes and schema matches."
+                }
+                """;
+        }
+        return "{}";
     }
 }
