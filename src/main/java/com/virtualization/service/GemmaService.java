@@ -266,7 +266,7 @@ public class GemmaService {
 
         // Chat conversation handler using the dynamic RAG context
         if (msg.contains("hi") || msg.contains("hello") || msg.contains("hey")) {
-            String greeting = "Hello! I am your Virtu-AI System Assistant. How can I help you design, record, or mock your virtual APIs today?";
+            String greeting = "Hello! I am Virtumate, your API Virtualization Assistant. How can I help you design, record, or mock your virtual APIs today?";
             if (wantsRag) {
                 return greeting + "\n" + ragSummary;
             } else {
